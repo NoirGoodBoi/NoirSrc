@@ -3,7 +3,7 @@ local NoirUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGo
 
 -- ========== TAO CUA SO CHINH ==========
 local Window = NoirUI:CreateWindow({
-    Name = "🔥 NOIR UNIVERSAL 🔥",
+    Name = "🔥 NOIR ULTIMATE HUB 🔥",
     Accent = Color3.fromRGB(255, 50, 100),
     LogoID = nil,
     Icon = "👑",
@@ -11,7 +11,7 @@ local Window = NoirUI:CreateWindow({
     FloatDefaultPosition = UDim2.new(0, 15, 0.5, -22),
 })
 
--- ========== DECLARE SERVICES ==========
+-- ========== SERVICES ==========
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -21,7 +21,7 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local mouse = LocalPlayer:GetMouse()
 
--- ========== TAO TAB ==========
+-- ========== TAO TABS ==========
 local PlayerTab = Window:CreateTab("Player", "user")
 local VisualTab = Window:CreateTab("Visual", "eye")
 local AimbotTab = Window:CreateTab("Aimbot", "target")
@@ -121,39 +121,39 @@ PlayerTab:CreateToggle({
     end
 })
 
-local humanoid
-local jumpConnection
-local mode = "Normal"
+local autoJumpHumanoid = nil
+local autoJumpConnection = nil
+local autoJumpMode = "Normal"
 
-local function getHumanoid()
+local function getAutoJumpHumanoid()
     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     return char:WaitForChild("Humanoid")
 end
 
-humanoid = getHumanoid()
+autoJumpHumanoid = getAutoJumpHumanoid()
 
 LocalPlayer.CharacterAdded:Connect(function(char)
-    humanoid = char:WaitForChild("Humanoid")
+    autoJumpHumanoid = char:WaitForChild("Humanoid")
 end)
 
-local function stopJump()
-    if jumpConnection then jumpConnection:Disconnect(); jumpConnection = nil end
+local function stopAutoJump()
+    if autoJumpConnection then autoJumpConnection:Disconnect(); autoJumpConnection = nil end
 end
 
-local function startJump()
-    stopJump()
-    jumpConnection = RunService.RenderStepped:Connect(function()
-        if not humanoid then return end
-        if humanoid.FloorMaterial == Enum.Material.Air then return end
-        if mode == "Normal" then
-            humanoid.Jump = true
-        elseif mode == "Bhop" then
-            humanoid.Jump = true
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
-        elseif mode == "Smart" then
-            if humanoid.MoveDirection.Magnitude > 0 then humanoid.Jump = true end
-        elseif mode == "Force" then
-            humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+local function startAutoJump()
+    stopAutoJump()
+    autoJumpConnection = RunService.RenderStepped:Connect(function()
+        if not autoJumpHumanoid then return end
+        if autoJumpHumanoid.FloorMaterial == Enum.Material.Air then return end
+        if autoJumpMode == "Normal" then
+            autoJumpHumanoid.Jump = true
+        elseif autoJumpMode == "Bhop" then
+            autoJumpHumanoid.Jump = true
+            autoJumpHumanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        elseif autoJumpMode == "Smart" then
+            if autoJumpHumanoid.MoveDirection.Magnitude > 0 then autoJumpHumanoid.Jump = true end
+        elseif autoJumpMode == "Force" then
+            autoJumpHumanoid:ChangeState(Enum.HumanoidStateType.Jumping)
         end
     end)
 end
@@ -162,13 +162,13 @@ PlayerTab:CreateDropdown({
     Name = "Auto Jump Mode",
     Options = {"Normal", "Bhop", "Smart", "Force"},
     Default = "Normal",
-    Callback = function(option) mode = option end
+    Callback = function(option) autoJumpMode = option end
 })
 
 PlayerTab:CreateToggle({
     Name = "Auto Jump",
     Default = false,
-    Callback = function(state) if state then startJump() else stopJump() end end
+    Callback = function(state) if state then startAutoJump() else stopAutoJump() end end
 })
 
 local noclipEnabled = false
@@ -254,7 +254,7 @@ PlayerTab:CreateButton({
 
 PlayerTab:CreateSection("🛡️ Protection")
 
-local Toggles = { AntiFling = false, AntiVoid = false, SafePosition = false, SmartAntiTP = false, AntiStun = false }
+local protectToggles = { AntiFling = false, AntiVoid = false, SafePosition = false, SmartAntiTP = false, AntiStun = false }
 local LastSafePos = nil
 local AntiAFKActive = false
 local AntiFlingData = { LastVelocity = nil, LastPosition = nil, LastTime = nil, FlingCount = 0, LastAlertTime = 0 }
@@ -275,11 +275,11 @@ local function fixCharacter(hum, root)
     end
 end
 
-PlayerTab:CreateToggle({ Name = "Anti Fling", Default = false, Callback = function(v) Toggles.AntiFling = v end })
-PlayerTab:CreateToggle({ Name = "Anti Stun", Default = false, Callback = function(v) Toggles.AntiStun = v end })
-PlayerTab:CreateToggle({ Name = "Anti Void", Default = false, Callback = function(v) Toggles.AntiVoid = v end })
-PlayerTab:CreateToggle({ Name = "Safe Position", Default = false, Callback = function(v) Toggles.SafePosition = v end })
-PlayerTab:CreateToggle({ Name = "Smart Anti TP", Default = false, Callback = function(v) Toggles.SmartAntiTP = v end })
+PlayerTab:CreateToggle({ Name = "Anti Fling", Default = false, Callback = function(v) protectToggles.AntiFling = v end })
+PlayerTab:CreateToggle({ Name = "Anti Stun", Default = false, Callback = function(v) protectToggles.AntiStun = v end })
+PlayerTab:CreateToggle({ Name = "Anti Void", Default = false, Callback = function(v) protectToggles.AntiVoid = v end })
+PlayerTab:CreateToggle({ Name = "Safe Position", Default = false, Callback = function(v) protectToggles.SafePosition = v end })
+PlayerTab:CreateToggle({ Name = "Smart Anti TP", Default = false, Callback = function(v) protectToggles.SmartAntiTP = v end })
 
 PlayerTab:CreateButton({
     Name = "Anti AFK",
@@ -299,7 +299,7 @@ PlayerTab:CreateButton({
                 end
             end)
         end)
-        NoirUI:Notify("Anti AFK", "Đa bat chong AFK")
+        NoirUI:Notify("Anti AFK", "Da bat chong AFK")
     end
 })
 
@@ -309,7 +309,7 @@ RunService.Heartbeat:Connect(function()
     local hrp = getHRP()
     if not char or not hum or not hrp then return end
 
-    if Toggles.AntiFling then
+    if protectToggles.AntiFling then
         local now = tick()
         local currentVel = hrp.AssemblyLinearVelocity
         local currentPos = hrp.Position
@@ -348,12 +348,12 @@ RunService.Heartbeat:Connect(function()
         AntiFlingData.LastTime = now
     end
 
-    if Toggles.AntiVoid and hrp.Position.Y < -10 then
+    if protectToggles.AntiVoid and hrp.Position.Y < -10 then
         hrp.CFrame = CFrame.new(hrp.Position.X, 20, hrp.Position.Z)
         hrp.AssemblyLinearVelocity = Vector3.zero
     end
 
-    if Toggles.SafePosition then
+    if protectToggles.SafePosition then
         LastSafePos = LastSafePos or hrp.Position
         local dist = (hrp.Position - LastSafePos).Magnitude
         if dist < 30 then LastSafePos = hrp.Position
@@ -363,14 +363,14 @@ RunService.Heartbeat:Connect(function()
         end
     end
 
-    if Toggles.SmartAntiTP then
+    if protectToggles.SmartAntiTP then
         if LastSafePos and (hrp.Position - LastSafePos).Magnitude > 100 then
             hrp.CFrame = CFrame.new(LastSafePos)
             hrp.AssemblyLinearVelocity = Vector3.zero
         end
     end
 
-    if Toggles.AntiStun then fixCharacter(hum, hrp) end
+    if protectToggles.AntiStun then fixCharacter(hum, hrp) end
 end)
 
 -- ======================== VISUAL TAB ========================
@@ -534,8 +534,8 @@ VisualTab:CreateColorPicker({ Name = "Highlight Color", Default = highlightSetti
 VisualTab:CreateSection("🔍 X-Ray")
 
 local xrayEnabled = false
-local saved = {}
-local transparencyValue = 0.5
+local savedTransparency = {}
+local xrayTransparency = 0.5
 
 local function isPlayerCharacter(obj)
     local model = obj:FindFirstAncestorOfClass("Model")
@@ -550,10 +550,10 @@ local function applyXray(state)
             if isPlayerCharacter(obj) then continue end
             if LocalPlayer.Character and obj:IsDescendantOf(LocalPlayer.Character) then continue end
             if state then
-                if not saved[obj] then saved[obj] = obj.Transparency end
-                obj.Transparency = transparencyValue
+                if not savedTransparency[obj] then savedTransparency[obj] = obj.Transparency end
+                obj.Transparency = xrayTransparency
             else
-                if saved[obj] then obj.Transparency = saved[obj] end
+                if savedTransparency[obj] then obj.Transparency = savedTransparency[obj] end
             end
         end
     end
@@ -561,7 +561,7 @@ end
 
 VisualTab:CreateToggle({ Name = "X-Ray", Default = false, Callback = function(v) applyXray(v) end })
 VisualTab:CreateSlider({ Name = "X-Ray Transparency", Min = 0.3, Max = 1, Default = 0.5, Callback = function(v)
-    transparencyValue = v
+    xrayTransparency = v
     if xrayEnabled then applyXray(true) end
 end })
 
@@ -591,21 +591,21 @@ local function createHealthBar(player)
     HealthBars[player] = bar
 end
 
-local function removeESP(p)
+local function removeESPObjects(p)
     if Tracers[p] then Tracers[p]:Remove(); Tracers[p] = nil end
     if Boxes[p] then Boxes[p]:Remove(); Boxes[p] = nil end
     if HealthBars[p] then HealthBars[p]:Remove(); HealthBars[p] = nil end
 end
 
-local function setupPlayer(plr)
+local function setupPlayerESP(plr)
     if plr == LocalPlayer then return end
     createBoxESP(plr)
     createHealthBar(plr)
 end
 
-for _, plr in pairs(Players:GetPlayers()) do setupPlayer(plr) end
-Players.PlayerAdded:Connect(setupPlayer)
-Players.PlayerRemoving:Connect(removeESP)
+for _, plr in pairs(Players:GetPlayers()) do setupPlayerESP(plr) end
+Players.PlayerAdded:Connect(setupPlayerESP)
+Players.PlayerRemoving:Connect(removeESPObjects)
 
 RunService.RenderStepped:Connect(function()
     local myChar = LocalPlayer.Character
@@ -769,13 +769,13 @@ local LastVelocity = Vector3.new()
 local LastSwitchTime = 0
 local NPCList = {}
 
-local ScreenGui = Instance.new("ScreenGui")
-ScreenGui.IgnoreGuiInset = true
-ScreenGui.ResetOnSpawn = false
-pcall(function() ScreenGui.Parent = LocalPlayer.PlayerGui end)
-if not ScreenGui.Parent then ScreenGui.Parent = game:GetService("CoreGui") end
+local FOVScreenGui = Instance.new("ScreenGui")
+FOVScreenGui.IgnoreGuiInset = true
+FOVScreenGui.ResetOnSpawn = false
+pcall(function() FOVScreenGui.Parent = LocalPlayer.PlayerGui end)
+if not FOVScreenGui.Parent then FOVScreenGui.Parent = game:GetService("CoreGui") end
 
-local FOVCircle = Instance.new("Frame", ScreenGui)
+local FOVCircle = Instance.new("Frame", FOVScreenGui)
 FOVCircle.AnchorPoint = Vector2.new(0.5, 0.5)
 FOVCircle.BackgroundTransparency = 1
 FOVCircle.Visible = false
@@ -844,7 +844,7 @@ local function IsValidTarget(character, player)
     return true
 end
 
-local function RefreshNPCs()
+local function RefreshNPCList()
     NPCList = {}
     for _, obj in pairs(workspace:GetDescendants()) do
         if obj:IsA("Model") and obj:FindFirstChildOfClass("Humanoid") and obj:FindFirstChild("HumanoidRootPart") then
@@ -852,7 +852,7 @@ local function RefreshNPCs()
         end
     end
 end
-task.spawn(function() while true do task.wait(2) RefreshNPCs() end end)
+task.spawn(function() while true do task.wait(2) RefreshNPCList() end end)
 
 local function GetClosestTarget()
     local closest = nil
@@ -948,7 +948,7 @@ local function addLimbIfNew(name)
     end
 end
 
-local function onCharAdded(Character)
+local function onCharacterAdded(Character)
     for _, part in ipairs(Character:GetChildren()) do if part:IsA("BasePart") then addLimbIfNew(part.Name) end end
     Character.ChildAdded:Connect(function(child) if child:IsA("BasePart") then addLimbIfNew(child.Name) end end)
 end
@@ -957,8 +957,8 @@ TargetLimbDropdown = LimbsTab:CreateDropdown({
     Name = "Target Limb", Options = {}, Default = le:Get("TARGET_LIMB"),
     Callback = function(opt) le:Set("TARGET_LIMB", opt) end
 })
-LocalPlayer.CharacterAdded:Connect(onCharAdded)
-if LocalPlayer.Character then onCharAdded(LocalPlayer.Character) end
+LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
+if LocalPlayer.Character then onCharacterAdded(LocalPlayer.Character) end
 
 LimbsTab:CreateSection("🤖 NPC Hitbox")
 local npcHitbox = { Enabled = false, Size = 5, Transparency = 0.9, Part = "HumanoidRootPart", TeamCheck = false, Collision = false }
@@ -1015,7 +1015,7 @@ task.spawn(function()
     end
 end)
 
--- ======================== PEOPLE TAB ========================
+-- ======================== PEOPLE TAB (FIXED DROPDOWN) ========================
 PeopleTab:CreateSection("🎲 Random")
 
 local function getTargetChar(p) return p and p.Character end
@@ -1071,39 +1071,42 @@ PeopleTab:CreateSection("👥 Player List")
 
 local selectedTarget = nil
 local loopTP = false
+local currentDropdown = nil
 
-local playerPickDropdown = PeopleTab:CreateDropdown({
-    Name = "Select Player",
-    Options = {"Loading..."},
-    Default = "Loading...",
-    Callback = function(opt)
-        if opt and opt ~= "Loading..." then
-            local name = opt:match("%[@(.-)%]") or opt
-            selectedTarget = name
-            NoirUI:Notify("Selected", "Da chon: " .. name)
-        end
+local function createPlayerDropdown()
+    if currentDropdown and currentDropdown.Destroy then
+        currentDropdown:Destroy()
     end
-})
-
-local function updatePlayerDropdown()
-    local opts = {}
+    
+    local options = {}
     for _, plr in ipairs(Players:GetPlayers()) do
         if plr ~= LocalPlayer then
-            table.insert(opts, plr.DisplayName .. " [@" .. plr.Name .. "]")
+            table.insert(options, plr.DisplayName .. " [@" .. plr.Name .. "]")
         end
     end
-    if #opts == 0 then
-        table.insert(opts, "No other players")
+    if #options == 0 then
+        table.insert(options, "No players")
     end
-    playerPickDropdown:Refresh(opts)
-    if #opts > 0 and opts[1] ~= "No other players" then
-        playerPickDropdown:SetValue(opts[1])
-    end
+    
+    currentDropdown = PeopleTab:CreateDropdown({
+        Name = "Select Player",
+        Options = options,
+        Default = options[1] or "",
+        Callback = function(opt)
+            if opt and opt ~= "No players" then
+                local name = opt:match("%[@(.-)%]") or opt
+                selectedTarget = name
+                NoirUI:Notify("Selected", "Da chon: " .. name)
+            end
+        end
+    })
 end
 
-PeopleTab:CreateButton({ Name = "🔄 Refresh List", Callback = function()
-    updatePlayerDropdown()
-    NoirUI:Notify("Refresh", "Da cap nhat danh sach")
+createPlayerDropdown()
+
+PeopleTab:CreateButton({ Name = "🔄 Refresh Player List", Callback = function()
+    createPlayerDropdown()
+    NoirUI:Notify("Refresh", "Da cap nhat danh sach nguoi choi")
 end })
 
 PeopleTab:CreateButton({ Name = "📡 TP to Selected", Callback = function()
@@ -1136,6 +1139,7 @@ PeopleTab:CreateToggle({ Name = "Orbit Player", Default = false, Callback = func
 PeopleTab:CreateSlider({ Name = "Orbit Radius", Min = 1, Max = 1000, Default = 10, Callback = function(v) orbitR = v end })
 PeopleTab:CreateSlider({ Name = "Orbit Speed", Min = 1, Max = 1000, Default = 30, Callback = function(v) orbitSpd = v end })
 PeopleTab:CreateSlider({ Name = "Orbit Height", Min = -200, Max = 200, Default = 0, Callback = function(v) orbitY = v end })
+
 PeopleTab:CreateSection("🎯 Camera Aim")
 PeopleTab:CreateToggle({ Name = "Aim at Player", Default = false, Callback = function(v) isAiming = v end })
 PeopleTab:CreateSlider({ Name = "Aim Strength", Min = 0.1, Max = 1, Default = 0.35, Callback = function(v) aimStr = v end })
@@ -1191,11 +1195,18 @@ end
 
 btnLeft.MouseButton1Click:Connect(function()
     local i, list = getTargetIndex()
-    if i and list[i-1] then selectedTarget = list[i-1].Name; updatePlayerDropdown() end
+    if i and list[i-1] then 
+        selectedTarget = list[i-1].Name
+        NoirUI:Notify("Spectate", "Chuyen sang: " .. selectedTarget)
+    end
 end)
+
 btnRight.MouseButton1Click:Connect(function()
     local i, list = getTargetIndex()
-    if i and list[i+1] then selectedTarget = list[i+1].Name; updatePlayerDropdown() end
+    if i and list[i+1] then 
+        selectedTarget = list[i+1].Name
+        NoirUI:Notify("Spectate", "Chuyen sang: " .. selectedTarget)
+    end
 end)
 
 PeopleTab:CreateToggle({ Name = "Spectate Player", Default = false, Callback = function(state)
@@ -1206,9 +1217,6 @@ PeopleTab:CreateToggle({ Name = "Spectate Player", Default = false, Callback = f
     end
 end })
 
-updatePlayerDropdown()
-
--- Main loops for People tab
 RunService.Heartbeat:Connect(function(dt)
     local target = selectedTarget and Players:FindFirstChild(selectedTarget)
     local myHRP = getTargetHRP(LocalPlayer)
@@ -1257,6 +1265,7 @@ end)
 
 -- ======================== MISC TAB ========================
 MiscTab:CreateSection("⚡ Performance")
+
 MiscTab:CreateButton({
     Name = "UniverHub FPS Booster",
     Callback = function()
@@ -1267,6 +1276,8 @@ MiscTab:CreateButton({
 local statsGUI = nil
 local fpsLabel = nil
 local memLabel = nil
+local showFPS = false
+local showMem = false
 
 local function destroyStatsGUI()
     if statsGUI then statsGUI:Destroy(); statsGUI = nil end
@@ -1348,15 +1359,13 @@ local function createStatsGUI()
     end)
 end
 
-local showFPS = false
-local showMem = false
-
 MiscTab:CreateToggle({ Name = "Show FPS & Ping", Default = false, Callback = function(v)
     showFPS = v
     if not statsGUI then createStatsGUI() end
     if fpsLabel then fpsLabel.Visible = v end
     if not showFPS and not showMem then destroyStatsGUI() end
 end })
+
 MiscTab:CreateToggle({ Name = "Show Memory", Default = false, Callback = function(v)
     showMem = v
     if not statsGUI then createStatsGUI() end

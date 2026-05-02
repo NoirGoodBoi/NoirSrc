@@ -22,12 +22,12 @@ local Camera = workspace.CurrentCamera
 local mouse = LocalPlayer:GetMouse()
 
 -- ========== TẠO TAB ==========
-local PlayerTab = Window:CreateTab("Player", 16898612819)
-local VisualTab = Window:CreateTab("Visual", 16898613353)
-local AimbotTab = Window:CreateTab("Aimbot", 16898613869)
-local LimbsTab = Window:CreateTab("Limbs", 16898613699)
-local PeopleTab = Window:CreateTab("People", 16898613869)
-local MiscTab = Window:CreateTab("Misc", 16898673999)
+local PlayerTab = Window:CreateTab("👤 Player")
+local VisualTab = Window:CreateTab("👁️ ️Visual")
+local AimbotTab = Window:CreateTab("🎯 Aimbot")
+local LimbsTab = Window:CreateTab("📈 Limbs")
+local PeopleTab = Window:CreateTab("👥 People")
+local MiscTab = Window:CreateTab("⚙️ Misc")
 
 -- ======================== PLAYER TAB ========================
 PlayerTab:CreateSection("🏃 Movement")
@@ -728,7 +728,7 @@ VisualTab:CreateSlider({ Name = "Tracer Distance", Min = 500, Max = 10000, Defau
 
 VisualTab:CreateSection("🤖 NPC ESP")
 
-local npcSettings = { EspName = true, Outline = true, Fill = true, TracerBox = true }
+local npcSettings = { EspName = false, Outline = false, Fill = false, TracerBox = false }
 local npcColors = { Default = Color3.fromRGB(0, 255, 255), Team = Color3.fromRGB(255, 255, 0), Enemy = Color3.fromRGB(255, 165, 0) }
 
 local function IsPlayer(model) return Players:GetPlayerFromCharacter(model) and true or false end
@@ -807,10 +807,10 @@ local function ScanNPCs()
     end)
 end
 
-VisualTab:CreateToggle({ Name = "ESP Name (NPC)", Default = true, Callback = function(v) npcSettings.EspName = v end })
-VisualTab:CreateToggle({ Name = "Highlight Outline (NPC)", Default = true, Callback = function(v) npcSettings.Outline = v end })
-VisualTab:CreateToggle({ Name = "Highlight Fill (NPC)", Default = true, Callback = function(v) npcSettings.Fill = v end })
-VisualTab:CreateToggle({ Name = "Tracer + Box 2D (NPC)", Default = true, Callback = function(v) npcSettings.TracerBox = v end })
+VisualTab:CreateToggle({ Name = "ESP Name (NPC)", Default = false, Callback = function(v) npcSettings.EspName = v end })
+VisualTab:CreateToggle({ Name = "Highlight Outline (NPC)", Default = false, Callback = function(v) npcSettings.Outline = v end })
+VisualTab:CreateToggle({ Name = "Highlight Fill (NPC)", Default = false, Callback = function(v) npcSettings.Fill = v end })
+VisualTab:CreateToggle({ Name = "Tracer + Box 2D (NPC)", Default = false, Callback = function(v) npcSettings.TracerBox = v end })
 ScanNPCs()
 
 -- ======================== AIMBOT TAB ========================
@@ -1071,7 +1071,8 @@ task.spawn(function()
     end
 end)
 
--- ======================== PEOPLE TAB ========================
+-- ======================== PEOPLE TAB
+
 PeopleTab:CreateSection("🎲 Random")
 
 local function getChar2(p) return p and p.Character end
@@ -1124,35 +1125,68 @@ PeopleTab:CreateButton({ Name = "TP to Random Player", Callback = function()
 end })
 
 PeopleTab:CreateSection("👥 Player List")
+
 local currentTarget = nil
 local loopTeleport = false
 
+-- Tạo dropdown trước
 local playerDropdown = PeopleTab:CreateDropdown({
-    Name = "Player List", Options = {}, Default = "",
+    Name = "Select Player",
+    Options = {"Đang tải..."},
+    Default = "Đang tải...",
     Callback = function(opt)
-        if opt and opt ~= "" then
+        if opt and opt ~= "Đang tải..." then
             local name = opt:match("%[@(.-)%]") or opt
             currentTarget = name
+            NoirUI:Notify("Selected", "Đã chọn: " .. name)
         end
     end
 })
 
-local function refreshPlayers()
-    local opts = {}
-    for _, p in ipairs(Players:GetPlayers()) do
-        if p ~= LocalPlayer then table.insert(opts, p.DisplayName.." [@"..p.Name.."]") end
+-- Hàm refresh danh sách
+local function refreshPlayerList()
+    local options = {}
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(options, plr.DisplayName .. " [@" .. plr.Name .. "]")
+        end
     end
-    playerDropdown:Refresh(opts)
+    if #options == 0 then
+        table.insert(options, "Không có người chơi")
+    end
+    playerDropdown:Refresh(options)
 end
 
-PeopleTab:CreateButton({ Name = "Refresh Player List", Callback = refreshPlayers })
-refreshPlayers()
+-- Nút refresh
+PeopleTab:CreateButton({
+    Name = "🔄 Refresh Player List",
+    Callback = function()
+        refreshPlayerList()
+        NoirUI:Notify("Refresh", "Đã cập nhật danh sách người chơi")
+    end
+})
 
-PeopleTab:CreateButton({ Name = "Teleport to Selected Player", Callback = function()
-    local t = currentTarget and Players:FindFirstChild(currentTarget)
-    if t then teleportTo(t) end
-end })
-PeopleTab:CreateToggle({ Name = "Teleport Loop", Default = false, Callback = function(v) loopTeleport = v end })
+-- Teleport button
+PeopleTab:CreateButton({
+    Name = "📡 Teleport to Selected Player",
+    Callback = function()
+        local target = currentTarget and Players:FindFirstChild(currentTarget)
+        if target then
+            teleportTo(target)
+            NoirUI:Notify("Teleport", "Đã dịch đến " .. target.DisplayName)
+        else
+            NoirUI:Notify("Lỗi", "Chưa chọn người chơi hoặc người chơi không tồn tại")
+        end
+    end
+})
+
+PeopleTab:CreateToggle({
+    Name = "🔄 Teleport Loop",
+    Default = false,
+    Callback = function(state) loopTeleport = state end
+})
+
+PeopleTab:CreateSection("🔄 Follow & Orbit")
 
 local following = false
 local followSpeed = 20
@@ -1164,25 +1198,30 @@ local orbitAngle = 0
 local aimingTarget = false
 local aimStrength = 0.4
 
-PeopleTab:CreateSection("🔄 Follow & Orbit")
 PeopleTab:CreateToggle({ Name = "Follow Player", Default = false, Callback = function(v) following = v end })
 PeopleTab:CreateSlider({ Name = "Follow Speed", Min = 5, Max = 1000, Default = 20, Callback = function(v) followSpeed = v end })
 PeopleTab:CreateToggle({ Name = "Orbit Player", Default = false, Callback = function(v) orbiting = v end })
 PeopleTab:CreateSlider({ Name = "Orbit Radius", Min = 1, Max = 1000, Default = 10, Callback = function(v) orbitRadius = v end })
 PeopleTab:CreateSlider({ Name = "Orbit Speed", Min = 1, Max = 1000, Default = 30, Callback = function(v) orbitSpeed = v end })
 PeopleTab:CreateSlider({ Name = "Orbit Height", Min = -200, Max = 200, Default = 0, Callback = function(v) orbitHeight = v end })
+
 PeopleTab:CreateSection("🎯 Camera Aim")
 PeopleTab:CreateToggle({ Name = "Aim Camera at Player", Default = false, Callback = function(v) aimingTarget = v end })
 PeopleTab:CreateSlider({ Name = "Aim Strength", Min = 0.1, Max = 1, Default = 0.35, Callback = function(v) aimStrength = v end })
 
--- Spectate GUI
+PeopleTab:CreateSection("👁️ Spectate")
+
+local watching = false
 local spectateGui = Instance.new("ScreenGui", game.CoreGui)
 spectateGui.Enabled = false
+spectateGui.Name = "NoirSpectate"
+
 local frame = Instance.new("Frame", spectateGui)
 frame.Size = UDim2.new(0,260,0,120)
 frame.Position = UDim2.new(1,-270,0.3,0)
 frame.BackgroundTransparency = 0.2
 frame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0,8)
 
 local avatar = Instance.new("ImageLabel", frame)
 avatar.Size = UDim2.new(0,50,0,50)
@@ -1196,6 +1235,7 @@ info.BackgroundTransparency = 1
 info.TextScaled = true
 info.TextXAlignment = Enum.TextXAlignment.Left
 info.TextColor3 = Color3.fromRGB(255,255,255)
+info.Font = Enum.Font.SourceSansBold
 
 local left = Instance.new("TextButton", frame)
 left.Size = UDim2.new(0,25,0,25)
@@ -1203,6 +1243,7 @@ left.Position = UDim2.new(0,10,1,-30)
 left.Text = "<"
 left.BackgroundColor3 = Color3.fromRGB(50,50,50)
 left.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner", left).CornerRadius = UDim.new(1,0)
 
 local right = Instance.new("TextButton", frame)
 right.Size = UDim2.new(0,25,0,25)
@@ -1210,6 +1251,7 @@ right.Position = UDim2.new(0,40,1,-30)
 right.Text = ">"
 right.BackgroundColor3 = Color3.fromRGB(50,50,50)
 right.TextColor3 = Color3.fromRGB(255,255,255)
+Instance.new("UICorner", right).CornerRadius = UDim.new(1,0)
 
 local function getIndex()
     local list = getAllTargets()
@@ -1218,27 +1260,37 @@ end
 
 left.MouseButton1Click:Connect(function()
     local i, list = getIndex()
-    if i and list[i-1] then currentTarget = list[i-1].Name end
+    if i and list[i-1] then currentTarget = list[i-1].Name; refreshPlayerList() end
 end)
 right.MouseButton1Click:Connect(function()
     local i, list = getIndex()
-    if i and list[i+1] then currentTarget = list[i+1].Name end
+    if i and list[i+1] then currentTarget = list[i+1].Name; refreshPlayerList() end
 end)
 
-local watching = false
-PeopleTab:CreateToggle({ Name = "Spectate Player", Default = false, Callback = function(v)
-    watching = v
-    spectateGui.Enabled = v
-    if not v then Camera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass("Humanoid") end
-end })
+PeopleTab:CreateToggle({
+    Name = "Spectate Player",
+    Default = false,
+    Callback = function(state)
+        watching = state
+        spectateGui.Enabled = state
+        if not state then
+            if LocalPlayer.Character then
+                Camera.CameraSubject = LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
+            end
+        end
+    end
+})
 
--- Main loops for People tab
+-- Refresh danh sách lần đầu
+refreshPlayerList()
+
+-- Loop Teleport & Follow & Orbit
 RunService.Heartbeat:Connect(function(dt)
-    local t = currentTarget and Players:FindFirstChild(currentTarget)
+    local target = currentTarget and Players:FindFirstChild(currentTarget)
     local hrp1 = getHRP2(LocalPlayer)
-    local hrp2 = t and getHRP2(t)
+    local hrp2 = target and getHRP2(target)
 
-    if loopTeleport and t then teleportTo(t) end
+    if loopTeleport and target then teleportTo(target) end
     if following and hrp1 and hrp2 then
         local pos = hrp2.Position + Vector3.new(0,0,3)
         hrp1.CFrame = hrp1.CFrame:Lerp(CFrame.new(pos), dt * (followSpeed/10))
@@ -1251,19 +1303,20 @@ RunService.Heartbeat:Connect(function(dt)
     end
 end)
 
+-- Aim & Spectate
 RunService.RenderStepped:Connect(function()
-    local t = currentTarget and Players:FindFirstChild(currentTarget)
-    if aimingTarget and t then
-        local hrp = getHRP2(t)
+    local target = currentTarget and Players:FindFirstChild(currentTarget)
+    if aimingTarget and target then
+        local hrp = getHRP2(target)
         if hrp then
             local predictedPos = hrp.Position + (hrp.Velocity * 0.1)
             local targetCF = CFrame.new(Camera.CFrame.Position, predictedPos)
             Camera.CFrame = Camera.CFrame:Lerp(targetCF, aimStrength)
         end
     end
-    if watching and t then
-        local hum = getChar2(t) and getChar2(t):FindFirstChildOfClass("Humanoid")
-        local hrp = getHRP2(t)
+    if watching and target then
+        local hum = getChar2(target) and getChar2(target):FindFirstChildOfClass("Humanoid")
+        local hrp = getHRP2(target)
         if hum and hrp then
             Camera.CameraSubject = hum
             local myHRP = getHRP2(LocalPlayer)
@@ -1271,8 +1324,8 @@ RunService.RenderStepped:Connect(function()
             local velocity = hrp.Velocity
             local realSpeed = math.floor(Vector3.new(velocity.X,0,velocity.Z).Magnitude)
             local jumpState = hum:GetState() == Enum.HumanoidStateType.Jumping and "Jumping" or "Ground"
-            avatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..t.UserId.."&width=150&height=150&format=png"
-            info.Text = t.DisplayName.." [@"..t.Name.."]\nDist: "..dist.."\nSpeed: "..realSpeed.."\nState: "..jumpState
+            avatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..target.UserId.."&width=150&height=150&format=png"
+            info.Text = target.DisplayName.." [@"..target.Name.."]\nDistance: "..dist.."m\nSpeed: "..realSpeed.."\nState: "..jumpState
         end
     elseif spectateGui.Enabled then
         info.Text = ""

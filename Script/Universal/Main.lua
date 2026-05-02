@@ -22,12 +22,12 @@ local Camera = workspace.CurrentCamera
 local mouse = LocalPlayer:GetMouse()
 
 -- ========== TAO TABS ==========
-local PlayerTab = Window:CreateTab("Player", "user")
-local VisualTab = Window:CreateTab("Visual", "eye")
-local AimbotTab = Window:CreateTab("Aimbot", "target")
-local LimbsTab = Window:CreateTab("Limbs", "scale-3d")
-local PeopleTab = Window:CreateTab("People", "users")
-local MiscTab = Window:CreateTab("Misc", "settings")
+local PlayerTab = Window:CreateTab("👤 Player")
+local VisualTab = Window:CreateTab("👁️ Visual")
+local AimbotTab = Window:CreateTab("🎯 Aimbot")
+local LimbsTab = Window:CreateTab("📈 Limbs")
+local PeopleTab = Window:CreateTab("👥 People")
+local MiscTab = Window:CreateTab("ℹ Misc")
 
 -- ======================== PLAYER TAB ========================
 PlayerTab:CreateSection("🏃 Movement")
@@ -118,6 +118,13 @@ PlayerTab:CreateToggle({
         else
             if infJumpConnection then infJumpConnection:Disconnect(); infJumpConnection = nil end
         end
+    end
+})
+
+PlayerTab:CreateButton({
+    Name = "Fly",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/NoirGui/main/Noir_Fly"))()
     end
 })
 
@@ -977,7 +984,7 @@ LimbsTab:CreateToggle({ Name = "Enable NPC Hitbox", Default = false, Callback = 
         OldSizes = {}
     end
 end })
-LimbsTab:CreateSlider({ Name = "NPC Hitbox Size", Min = 5, Max = 100, Default = 5, Callback = function(v) npcHitbox.Size = v end })
+LimbsTab:CreateSlider({ Name = "NPC Hitbox Size", Min = 5, Max = 200, Default = 5, Callback = function(v) npcHitbox.Size = v end })
 LimbsTab:CreateSlider({ Name = "NPC Transparency", Min = 0, Max = 1, Default = 0.9, Callback = function(v) npcHitbox.Transparency = v end })
 LimbsTab:CreateToggle({ Name = "NPC Team Check", Default = false, Callback = function(v) npcHitbox.TeamCheck = v end })
 LimbsTab:CreateToggle({ Name = "NPC Collision", Default = false, Callback = function(v) npcHitbox.Collision = v end })
@@ -1266,13 +1273,6 @@ end)
 -- ======================== MISC TAB ========================
 MiscTab:CreateSection("⚡ Performance")
 
-MiscTab:CreateButton({
-    Name = "UniverHub FPS Booster",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/Uranus197/-Univers-Hub-Graphics-Script-/refs/heads/main/UniversHub"))()
-    end
-})
-
 local statsGUI = nil
 local fpsLabel = nil
 local memLabel = nil
@@ -1372,3 +1372,19 @@ MiscTab:CreateToggle({ Name = "Show Memory", Default = false, Callback = functio
     if memLabel then memLabel.Visible = v end
     if not showFPS and not showMem then destroyStatsGUI() end
 end })
+
+MiscTab:CreateSection("🔧 Other")
+
+MiscTab:CreateButton({
+    Name = "Infinite Yield",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
+    end
+})
+
+MiscTab:CreateButton({
+    Name = "Nameless",
+    Callback = function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/ltseverydayyou/Nameless-Admin/main/Source.lua"))()
+    end
+})

@@ -1372,7 +1372,7 @@ VisualTab:CreateSlider({ Name = "Tracer Distance", Min = 500, Max = 10000, Defau
 
 VisualTab:CreateSection("NPC ESP")
 
-local npcSettings = { EspName = true, Outline = true, Fill = true, TracerBox = true }
+local npcSettings = { EspName = false, Outline = false, Fill = false, TracerBox = false }
 local npcColors = { Default = Color3.fromRGB(0, 255, 255), Team = Color3.fromRGB(255, 255, 0), Enemy = Color3.fromRGB(255, 165, 0) }
 
 local function IsPlayer(model) return Players:GetPlayerFromCharacter(model) and true or false end
@@ -1447,10 +1447,10 @@ local function ScanNPCs()
     end)
 end
 
-VisualTab:CreateToggle({ Name = "ESP Name (NPC)", Default = true, Callback = function(v) npcSettings.EspName = v end })
-VisualTab:CreateToggle({ Name = "Highlight Outline (NPC)", Default = true, Callback = function(v) npcSettings.Outline = v end })
-VisualTab:CreateToggle({ Name = "Highlight Fill (NPC)", Default = true, Callback = function(v) npcSettings.Fill = v end })
-VisualTab:CreateToggle({ Name = "Tracer + Box 2D (NPC)", Default = true, Callback = function(v) npcSettings.TracerBox = v end })
+VisualTab:CreateToggle({ Name = "ESP Name (NPC)", Default = false, Callback = function(v) npcSettings.EspName = v end })
+VisualTab:CreateToggle({ Name = "Highlight Outline (NPC)", Default = false, Callback = function(v) npcSettings.Outline = v end })
+VisualTab:CreateToggle({ Name = "Highlight Fill (NPC)", Default = false, Callback = function(v) npcSettings.Fill = v end })
+VisualTab:CreateToggle({ Name = "Tracer + Box 2D (NPC)", Default = false, Callback = function(v) npcSettings.TracerBox = v end })
 ScanNPCs()
 
 -- ======================== AIMBOT TAB ========================
@@ -2076,7 +2076,3 @@ RunService.RenderStepped:Connect(function()
         specAvatar.Image = ""
     end
 end)
-
--- ========== NOTIFICATION ==========
-task.wait(2)
-NoirUI:Notify("🔥 NOIR HUB", "Da tai thanh cong!")

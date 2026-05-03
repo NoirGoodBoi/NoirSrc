@@ -34,7 +34,6 @@ task.wait(0.5)
 NoirUI:Notify("🔥 NOIR HUB", "Thanks to use Script by Noir & Binbeo 👻🤡")
 
 -- ========== TAO TABS ==========
-local MainTab = Window:CreateTab("Main", "home")
 local PlayerTab = Window:CreateTab("Player", "user")
 local FPSTab = Window:CreateTab("FPS", "gauge")
 local VisualTab = Window:CreateTab("Visual", "eye")
@@ -44,132 +43,7 @@ local GamesTab = Window:CreateTab("Games", "gamepad-2")
 local ScriptsTab = Window:CreateTab("Scripts", "file-text")
 local PacksTab = Window:CreateTab("Packs", "package")
 local PeopleTab = Window:CreateTab("People", "users")
-
--- ======================== MAIN TAB ========================
-MainTab:CreateSection("Server")
-
-local AllIDs = {}
-local foundAnything = ""
-
-MainTab:CreateButton({
-    Name = "Rejoin Server",
-    Callback = function()
-        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
-    end,
-})
-
-MainTab:CreateButton({
-    Name = "Server Hop",
-    Callback = function()
-        local Site
-        if foundAnything == "" then
-            Site = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
-        else
-            Site = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100&cursor="..foundAnything))
-        end
-        if Site.nextPageCursor then foundAnything = Site.nextPageCursor end
-        for i,v in pairs(Site.data) do
-            local ID = tostring(v.id)
-            if tonumber(v.playing) < tonumber(v.maxPlayers) and ID ~= game.JobId then
-                local Possible = true
-                for _,Existing in pairs(AllIDs) do if ID == Existing then Possible = false end end
-                if Possible then
-                    table.insert(AllIDs, ID)
-                    TeleportService:TeleportToPlaceInstance(game.PlaceId, ID)
-                    break
-                end
-            end
-        end
-    end,
-})
-
-MainTab:CreateButton({
-    Name = "Join Server Small",
-    Callback = function()
-        local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
-        local servers = HttpService:JSONDecode(game:HttpGet(url))
-        local lowest = nil
-        local players = math.huge
-        for _,v in pairs(servers.data) do
-            if v.playing < players and v.id ~= game.JobId then
-                players = v.playing
-                lowest = v.id
-            end
-        end
-        if lowest then TeleportService:TeleportToPlaceInstance(game.PlaceId, lowest) end
-    end,
-})
-
-MainTab:CreateButton({
-    Name = "Join Server Fast",
-    Callback = function()
-        local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Desc&limit=100"
-        local servers = HttpService:JSONDecode(game:HttpGet(url))
-        for _,v in pairs(servers.data) do
-            if v.playing < v.maxPlayers and v.id ~= game.JobId then
-                TeleportService:TeleportToPlaceInstance(game.PlaceId, v.id)
-                break
-            end
-        end
-    end,
-})
-
-MainTab:CreateSection("Information")
-
-MainTab:CreateLabel("Username: " .. LocalPlayer.Name)
-MainTab:CreateLabel("DisplayName: " .. LocalPlayer.DisplayName)
-MainTab:CreateLabel("UserId: " .. LocalPlayer.UserId)
-MainTab:CreateLabel("Account Age: " .. LocalPlayer.AccountAge .. " days")
-
-local pingLabel = MainTab:CreateLabel("Ping: ...")
-RunService.Heartbeat:Connect(function()
-    pingLabel:Set("Ping: " .. tostring(math.round(Stats.Network.ServerStatsItem["Data Ping"]:GetValue())) .. " ms")
-end)
-
-local startTime = tick()
-local timeLabel = MainTab:CreateLabel("Time Played: 0s")
-RunService.RenderStepped:Connect(function()
-    local elapsed = math.floor(tick() - startTime)
-    local mins = math.floor(elapsed / 60)
-    local secs = elapsed % 60
-    timeLabel:Set(string.format("Time Played: %d min %02d s", mins, secs))
-end)
-
-local posLabel = MainTab:CreateLabel("Position: ...")
-RunService.RenderStepped:Connect(function()
-    local char = LocalPlayer.Character
-    local hrp = char and char:FindFirstChild("HumanoidRootPart")
-    if hrp then
-        local pos = hrp.Position
-        posLabel:Set(string.format("Position: %.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z))
-    else
-        posLabel:Set("Position: -")
-    end
-end)
-
-pcall(function()
-    local info = MarketplaceService:GetProductInfo(game.PlaceId)
-    MainTab:CreateLabel("Game Name: " .. info.Name)
-end)
-
-MainTab:CreateLabel("PlaceId: " .. game.PlaceId)
-MainTab:CreateLabel("GameId: " .. game.GameId)
-MainTab:CreateLabel("JobId: " .. game.JobId)
-MainTab:CreateLabel("Game Version: " .. game.PlaceVersion)
-
-local playerCountLabel = MainTab:CreateLabel("Players: " .. #Players:GetPlayers())
-Players.PlayerAdded:Connect(function() playerCountLabel:Set("Players: " .. #Players:GetPlayers()) end)
-Players.PlayerRemoving:Connect(function() playerCountLabel:Set("Players: " .. #Players:GetPlayers()) end)
-
-MainTab:CreateSection("Players List")
-
-for _, player in pairs(Players:GetPlayers()) do
-    MainTab:CreateLabel(player.DisplayName .. " [@" .. player.Name .. "]")
-end
-
-Players.PlayerAdded:Connect(function(player)
-    MainTab:CreateLabel(player.DisplayName .. " [@" .. player.Name .. "]")
-end)
+local UtilitiesTab = Window:CreateTab("Utilities", "wrench")
 
 -- ======================== PLAYER TAB ========================
 PlayerTab:CreateSection("Movement")
@@ -2030,6 +1904,7 @@ PeopleTab:CreateSection("Player List")
 local selectedTarget = nil
 local loopTP = false
 
+-- DROPDOWN ĐỘNG THEO ĐÚNG DOCS MỚI
 local playerDropdown = PeopleTab:CreateDropdown({
     Name = "Select Player",
     GetOptions = function()
@@ -2198,3 +2073,316 @@ RunService.RenderStepped:Connect(function()
         specAvatar.Image = ""
     end
 end)
+
+-- ======================== UTILITIES TAB ========================
+UtilitiesTab:CreateSection("Server Management")
+
+local AllIDs = {}
+local foundAnything = ""
+
+UtilitiesTab:CreateButton({
+    Name = "Rejoin Server",
+    Callback = function()
+        TeleportService:TeleportToPlaceInstance(game.PlaceId, game.JobId, LocalPlayer)
+    end,
+})
+
+UtilitiesTab:CreateButton({
+    Name = "Server Hop",
+    Callback = function()
+        local Site
+        if foundAnything == "" then
+            Site = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"))
+        else
+            Site = HttpService:JSONDecode(game:HttpGet("https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100&cursor="..foundAnything))
+        end
+        if Site.nextPageCursor then foundAnything = Site.nextPageCursor end
+        for i,v in pairs(Site.data) do
+            local ID = tostring(v.id)
+            if tonumber(v.playing) < tonumber(v.maxPlayers) and ID ~= game.JobId then
+                local Possible = true
+                for _,Existing in pairs(AllIDs) do if ID == Existing then Possible = false end end
+                if Possible then
+                    table.insert(AllIDs, ID)
+                    TeleportService:TeleportToPlaceInstance(game.PlaceId, ID)
+                    break
+                end
+            end
+        end
+    end,
+})
+
+UtilitiesTab:CreateButton({
+    Name = "Join Server Small (Lowest Players)",
+    Callback = function()
+        local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Asc&limit=100"
+        local servers = HttpService:JSONDecode(game:HttpGet(url))
+        local lowest = nil
+        local players = math.huge
+        for _,v in pairs(servers.data) do
+            if v.playing < players and v.id ~= game.JobId then
+                players = v.playing
+                lowest = v.id
+            end
+        end
+        if lowest then TeleportService:TeleportToPlaceInstance(game.PlaceId, lowest) end
+    end,
+})
+
+UtilitiesTab:CreateButton({
+    Name = "Join Server Fast (Most Players)",
+    Callback = function()
+        local url = "https://games.roblox.com/v1/games/"..game.PlaceId.."/servers/Public?sortOrder=Desc&limit=100"
+        local servers = HttpService:JSONDecode(game:HttpGet(url))
+        for _,v in pairs(servers.data) do
+            if v.playing < v.maxPlayers and v.id ~= game.JobId then
+                TeleportService:TeleportToPlaceInstance(game.PlaceId, v.id)
+                break
+            end
+        end
+    end,
+})
+
+UtilitiesTab:CreateSection("Player Info")
+
+local utilSelectedPlayer = nil
+
+local function utilFindPlayer(text)
+    if not text or text == "" then return nil end
+    text = text:lower()
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr.Name:lower():match(text) or plr.DisplayName:lower():match(text) then return plr end
+    end
+    return nil
+end
+
+local function utilGetPlayerList()
+    local list = {}
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(list, plr.DisplayName .. " [@" .. plr.Name .. "]")
+        end
+    end
+    return list
+end
+
+local function utilCopyName()
+    if utilSelectedPlayer then
+        setclipboard(utilSelectedPlayer.Name)
+        NoirUI:Notify("Copied", "Name: " .. utilSelectedPlayer.Name)
+    else
+        NoirUI:Notify("Error", "No player selected")
+    end
+end
+
+local function utilCopyPosition()
+    if utilSelectedPlayer and utilSelectedPlayer.Character then
+        local hrp = utilSelectedPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local pos = hrp.Position
+            setclipboard(string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z))
+            NoirUI:Notify("Copied", "Position copied")
+        else
+            NoirUI:Notify("Error", "Cannot get position")
+        end
+    else
+        NoirUI:Notify("Error", "Player not found in game")
+    end
+end
+
+local function utilTeleportToCoordinates(x, y, z)
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CFrame = CFrame.new(x, y, z)
+        NoirUI:Notify("Teleported", string.format("To: %.1f, %.1f, %.1f", x, y, z))
+    end
+end
+
+UtilitiesTab:CreateInput({
+    Name = "Input Player Name",
+    PlaceholderText = "Type username or display name...",
+    Callback = function(text)
+        local plr = utilFindPlayer(text)
+        if plr then
+            utilSelectedPlayer = plr
+            NoirUI:Notify("Selected", plr.DisplayName .. " [@" .. plr.Name .. "]")
+        else
+            NoirUI:Notify("Not Found", "Player not found")
+        end
+    end
+})
+
+-- DROPDOWN ĐỘNG THEO ĐÚNG DOCS MỚI
+local utilDropdown = UtilitiesTab:CreateDropdown({
+    Name = "Select Player",
+    GetOptions = function()
+        local opts = {}
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer then
+                table.insert(opts, plr.DisplayName .. " [@" .. plr.Name .. "]")
+            end
+        end
+        if #opts == 0 then table.insert(opts, "No players") end
+        return opts
+    end,
+    RefreshOnOpen = true,
+    Callback = function(opt)
+        if opt and opt ~= "No players" then
+            local name = opt:match("%[@(.-)%]") or opt
+            utilSelectedPlayer = Players:FindFirstChild(name)
+            if utilSelectedPlayer then NoirUI:Notify("Selected", utilSelectedPlayer.DisplayName) end
+        end
+    end
+})
+
+UtilitiesTab:CreateButton({ Name = "📋 Copy Selected Player Name", Callback = utilCopyName })
+UtilitiesTab:CreateButton({ Name = "📍 Copy Selected Player Position", Callback = utilCopyPosition })
+
+UtilitiesTab:CreateSection("Map Teleport")
+
+local coordX, coordY, coordZ = 0, 0, 0
+
+UtilitiesTab:CreateInput({
+    Name = "Coordinates (X Y Z)",
+    PlaceholderText = "Example: 0 10 0 or -39.5 6.2 -84.7",
+    Callback = function(text)
+        local parts = {}
+        for num in string.gmatch(text, "[-]?%d+%.?%d*") do
+            table.insert(parts, tonumber(num))
+        end
+        coordX = parts[1] or 0
+        coordY = parts[2] or 10
+        coordZ = parts[3] or 0
+    end
+})
+
+UtilitiesTab:CreateButton({ Name = "🚀 Teleport to Position", Callback = function() utilTeleportToCoordinates(coordX, coordY, coordZ) end })
+UtilitiesTab:CreateButton({ Name = "📷 Copy Camera Position", Callback = function()
+    local pos = Camera.CFrame.Position
+    setclipboard(string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z))
+    NoirUI:Notify("Copied", "Camera position copied")
+end })
+
+local loopTeleportActive = false
+local loopTeleportConnection = nil
+
+UtilitiesTab:CreateToggle({
+    Name = "🔄 Loop Teleport (Every 0.5s)",
+    Default = false,
+    Callback = function(v)
+        loopTeleportActive = v
+        if v then
+            if loopTeleportConnection then loopTeleportConnection:Disconnect() end
+            loopTeleportConnection = RunService.Heartbeat:Connect(function()
+                if loopTeleportActive then utilTeleportToCoordinates(coordX, coordY, coordZ) end
+            end)
+        else
+            if loopTeleportConnection then loopTeleportConnection:Disconnect(); loopTeleportConnection = nil end
+        end
+    end
+})
+
+local savedPositions = {}
+local savedDropdown = nil
+
+local function refreshSavedDropdown()
+    if not savedDropdown then return end
+    local options = {}
+    for name in pairs(savedPositions) do table.insert(options, name) end
+    if #options == 0 then table.insert(options, "No saved positions") end
+    savedDropdown:Refresh(options)
+end
+
+UtilitiesTab:CreateInput({
+    Name = "Save Current Position As",
+    PlaceholderText = "Enter name to save...",
+    Callback = function(text)
+        if text and text ~= "" then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                savedPositions[text] = hrp.Position
+                refreshSavedDropdown()
+                NoirUI:Notify("Saved", "Position saved as: " .. text)
+            else
+                NoirUI:Notify("Error", "Cannot get current position")
+            end
+        end
+    end
+})
+
+savedDropdown = UtilitiesTab:CreateDropdown({
+    Name = "Load Saved Position",
+    GetOptions = function()
+        local opts = {}
+        for name in pairs(savedPositions) do table.insert(opts, name) end
+        if #opts == 0 then table.insert(opts, "No saved positions") end
+        return opts
+    end,
+    RefreshOnOpen = true,
+    Callback = function(opt)
+        if opt and opt ~= "No saved positions" then
+            local pos = savedPositions[opt]
+            if pos then utilTeleportToCoordinates(pos.X, pos.Y, pos.Z) end
+        end
+    end
+})
+
+UtilitiesTab:CreateButton({ Name = "🔄 Refresh Saved List", Callback = refreshSavedDropdown })
+
+UtilitiesTab:CreateSection("Tools")
+UtilitiesTab:CreateButton({ Name = "👆 Tap to Teleport", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/Funny_FE_Scripts/main/Tap_to_TP"))() end })
+UtilitiesTab:CreateButton({ Name = "📦 Inventory Viewer", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/Funny_FE_Scripts/main/Inventory_Viewer"))() end })
+UtilitiesTab:CreateButton({ Name = "💀 Reset Character", Callback = function() if LocalPlayer.Character then LocalPlayer.Character:BreakJoints(); NoirUI:Notify("Reset", "Character reset") end end })
+
+UtilitiesTab:CreateSection("Remote Spy")
+
+local spyEnabled = false
+local remoteLogs = {}
+local spyConnected = false
+
+local function addRemoteLog(remote, ...)
+    if not spyEnabled then return end
+    local args = {...}
+    table.insert(remoteLogs, 1, { Time = os.date("%H:%M:%S"), Remote = tostring(remote), Arguments = args })
+    while #remoteLogs > 50 do table.remove(remoteLogs) end
+end
+
+local function setupRemoteSpy()
+    if spyConnected then return end
+    pcall(function()
+        local mt = getrawmetatable(game)
+        if mt then
+            setreadonly(mt, false)
+            local oldNamecall = mt.__namecall
+            mt.__namecall = function(self, ...)
+                local method = getnamecallmethod()
+                if (method == "FireServer" or method == "InvokeServer") and spyEnabled then
+                    addRemoteLog(self, ...)
+                end
+                return oldNamecall(self, ...)
+            end
+            setreadonly(mt, true)
+            spyConnected = true
+        end
+    end)
+end
+
+UtilitiesTab:CreateToggle({ Name = "🎮 Enable Remote Spy", Default = false, Callback = function(v)
+    spyEnabled = v
+    if v then setupRemoteSpy(); NoirUI:Notify("Remote Spy", "Enabled") else NoirUI:Notify("Remote Spy", "Disabled") end
+end })
+UtilitiesTab:CreateButton({ Name = "🗑️ Clear Logs", Callback = function() remoteLogs = {}; NoirUI:Notify("Cleared", "Logs cleared") end })
+UtilitiesTab:CreateButton({ Name = "📋 Print Logs to Console", Callback = function()
+    if #remoteLogs == 0 then NoirUI:Notify("Logs", "No remotes captured") return end
+    print("\n========== REMOTE SPY LOGS ==========")
+    for i, log in ipairs(remoteLogs) do print(string.format("[%s] %s", log.Time, log.Remote)); print("  Args:", log.Arguments); print("-----------------------------------") end
+    NoirUI:Notify("Printed", "Check console (F9)")
+end })
+UtilitiesTab:CreateButton({ Name = "📋 Copy Last Remote", Callback = function()
+    if #remoteLogs == 0 then NoirUI:Notify("Error", "No remotes captured") return end
+    local last = remoteLogs[1]
+    setclipboard(string.format("Remote: %s\nArgs: %s", last.Remote, tostring(last.Arguments)))
+    NoirUI:Notify("Copied", "Last remote copied")
+end })

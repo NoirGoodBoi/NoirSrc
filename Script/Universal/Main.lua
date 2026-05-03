@@ -33,15 +33,15 @@ task.wait(0.5)
 NoirUI:Notify("🔥 NOIR HUB", "Thanks to use Script by Noir & Binbeo 👻🤡")
 
 -- ========== TAO TABS ==========
-local PlayerTab = Window:CreateTab("Player", "user")
-local FPSTab = Window:CreateTab("FPS", "gauge")
-local VisualTab = Window:CreateTab("Visual", "eye")
-local AimbotTab = Window:CreateTab("Aimbot", "target")
-local LimbsTab = Window:CreateTab("Limbs", "scale-3d")
-local GamesTab = Window:CreateTab("Games", "gamepad-2")
-local ScriptsTab = Window:CreateTab("Scripts", "file-text")
-local PacksTab = Window:CreateTab("Packs", "package")
-local PeopleTab = Window:CreateTab("People", "users")
+local PlayerTab = Window:CreateTab("Player", "anime-1")
+local FPSTab = Window:CreateTab("FPS", "anime-3")
+local VisualTab = Window:CreateTab("Visual", "anime-5")
+local AimbotTab = Window:CreateTab("Aimbot", "anime-7")
+local LimbsTab = Window:CreateTab("Limbs", "anime-9")
+local GamesTab = Window:CreateTab("Games", "anime-11")
+local ScriptsTab = Window:CreateTab("Scripts", "anime-13")
+local PacksTab = Window:CreateTab("Packs", "anime-2")
+local PeopleTab = Window:CreateTab("People", "anime-4")
 
 -- ======================== PLAYER TAB ========================
 PlayerTab:CreateSection("Movement")
@@ -52,8 +52,8 @@ local speedLoop = nil
 
 PlayerTab:CreateSlider({
     Name = "Speed",
-    Min = 1,
-    Max = 1000,
+    range = {1, 1000}
+    increment = 1
     Default = 16,
     Callback = function(v) walkspeed = v end
 })
@@ -98,8 +98,8 @@ end
 
 PlayerTab:CreateSlider({
     Name = "Jump Power",
-    Min = 1,
-    Max = 1000,
+    range = {1, 1000}
+    increment = 1
     Default = 50,
     Callback = function(v) jumppower = v; applyJump() end
 })
@@ -175,23 +175,44 @@ PlayerTab:CreateToggle({
 local dashLength = 5
 local dashTime = 0.05
 local yBoost = 20
+local dashByCamera = false
 local dashGui = nil
 
 local function Dash()
     local char = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
     local hrp = char:WaitForChild("HumanoidRootPart")
+
     local bv = Instance.new("BodyVelocity")
     bv.MaxForce = Vector3.new(1e5, 1e5, 1e5)
+
     local bg = Instance.new("BodyGyro")
     bg.MaxTorque = Vector3.new(0, 1e5, 0)
     bg.CFrame = hrp.CFrame
-    local look = hrp.CFrame.LookVector
-    local dir = Vector3.new(look.X, 0, look.Z).Unit
+
+    local dir
+
+    if dashByCamera then
+        local cam = workspace.CurrentCamera
+        local look = cam.CFrame.LookVector
+        dir = look.Unit
+    else
+        local look = hrp.CFrame.LookVector
+        dir = Vector3.new(look.X, 0, look.Z).Unit
+    end
+
     local speed = dashLength / dashTime
-    bv.Velocity = (dir * speed) + Vector3.new(0, yBoost, 0)
+
+    if dashByCamera then
+        bv.Velocity = dir * speed
+    else
+        bv.Velocity = (dir * speed) + Vector3.new(0, yBoost, 0)
+    end
+
     bv.Parent = hrp
     bg.Parent = hrp
+
     task.wait(dashTime)
+
     bv:Destroy()
     bg:Destroy()
 end
@@ -201,6 +222,7 @@ local function createDashButton()
     dashGui = Instance.new("ScreenGui")
     dashGui.Name = "NoirDashUI"
     dashGui.Parent = game.CoreGui
+
     local btn = Instance.new("TextButton")
     btn.Parent = dashGui
     btn.Size = UDim2.new(0, 75, 0, 75)
@@ -211,30 +233,51 @@ local function createDashButton()
     btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-    local st = Instance.new("UIStroke", btn)
-    st.Thickness = 2
-    st.Color = Color3.fromRGB(90, 90, 90)
+    
+    local stroke = Instance.new("UIStroke", btn)
+    stroke.Thickness = 2
+    stroke.Color = Color3.fromRGB(90, 90, 90)
+    
     btn.Active = true
     btn.Draggable = true
     btn.MouseButton1Click:Connect(Dash)
 end
 
 local function removeDashButton()
-    if dashGui then dashGui:Destroy(); dashGui = nil end
+    if dashGui then
+        dashGui:Destroy()
+        dashGui = nil
+    end
 end
 
 PlayerTab:CreateToggle({
     Name = "Enable Dash",
     Default = false,
-    Callback = function(v) if v then createDashButton() else removeDashButton() end end
+    Callback = function(v)
+        if v then
+            createDashButton()
+        else
+            removeDashButton()
+        end
+    end
+})
+
+PlayerTab:CreateToggle({
+    Name = "Dash Theo Camera",
+    Default = false,
+    Callback = function(v)
+        dashByCamera = v
+    end
 })
 
 PlayerTab:CreateSlider({
     Name = "Dash Length",
-    Min = 5,
-    Max = 50,
+    range = {1, 50}
+    increment = 5
     Default = 5,
-    Callback = function(v) dashLength = v end
+    Callback = function(v)
+        dashLength = v
+    end
 })
 
 local dashLoaded = false
@@ -600,8 +643,8 @@ PlayerTab:CreateToggle({
 
 PlayerTab:CreateSlider({
     Name = "Field Of View",
-    Min = 30,
-    Max = 120,
+    range = {1, 120}
+    increment = 1
     Default = Camera.FieldOfView,
     Callback = function(v) Camera.FieldOfView = v end
 })
@@ -761,8 +804,8 @@ FPSTab:CreateToggle({
 
 FPSTab:CreateSlider({
     Name = "Fullbright Brightness",
-    Min = 1,
-    Max = 15,
+    range = {1, 15}
+    increment = 1
     Default = 5,
     Callback = function(v)
         fullbrightValue = v
@@ -1234,7 +1277,7 @@ VisualTab:CreateToggle({
 })
 
 VisualTab:CreateColorPicker({ Name = "Hitbox Color", Default = hitboxSettings.HitboxColor, Callback = function(c) hitboxSettings.HitboxColor = c end })
-VisualTab:CreateSlider({ Name = "Hitbox Transparency", Min = 0, Max = 1, Default = 0.5, Callback = function(v) hitboxSettings.HitboxTransparency = v end })
+VisualTab:CreateSlider({ Name = "Hitbox Transparency", range = {0, 1 }, increment = 0.1, Default = 0.5, Callback = function(v) hitboxSettings.HitboxTransparency = v end })
 
 VisualTab:CreateSection("X-Ray")
 
@@ -1265,7 +1308,7 @@ local function applyXray(state)
 end
 
 VisualTab:CreateToggle({ Name = "X-Ray", Default = false, Callback = function(v) applyXray(v) end })
-VisualTab:CreateSlider({ Name = "X-Ray Transparency", Min = 0.3, Max = 1, Default = 0.5, Callback = function(v)
+VisualTab:CreateSlider({ Name = "X-Ray Transparency", range = {0.3, 1}, increment = 0.1, Default = 0.5, Callback = function(v)
     xrayTransparency = v
     if xrayEnabled then applyXray(true) end
 end })
@@ -1368,7 +1411,7 @@ RunService.RenderStepped:Connect(function()
 end)
 
 VisualTab:CreateToggle({ Name = "Tracer", Default = false, Callback = function(v) showTracer = v end })
-VisualTab:CreateSlider({ Name = "Tracer Distance", Min = 500, Max = 10000, Default = 2000, Callback = function(v) tracerDistance = v end })
+VisualTab:CreateSlider({ Name = "Tracer Distance", range = {500, 10000}, increment = 100, Default = 2000, Callback = function(v) tracerDistance = v end })
 
 VisualTab:CreateSection("NPC ESP")
 
@@ -1488,12 +1531,12 @@ AimbotTab:CreateToggle({ Name = "Team Check", Default = true, Callback = functio
 AimbotTab:CreateToggle({ Name = "Wall Check", Default = true, Callback = function(v) aimbotSettings.WallCheck = v end })
 AimbotTab:CreateToggle({ Name = "Death Check", Default = true, Callback = function(v) aimbotSettings.DeathCheck = v end })
 AimbotTab:CreateSection("Settings")
-AimbotTab:CreateSlider({ Name = "Circle FOV", Min = 50, Max = 300, Default = 200, Callback = function(v)
+AimbotTab:CreateSlider({ Name = "Circle FOV", range = {50, 300}, increment = 5, Default = 200, Callback = function(v)
     aimbotSettings.FOVRadius = v
     FOVCircle.Size = UDim2.new(0, v * 2, 0, v * 2)
 end })
-AimbotTab:CreateSlider({ Name = "Smooth", Min = 0, Max = 1, Default = 1, Callback = function(v) aimbotSettings.Smoothness = v end })
-AimbotTab:CreateSlider({ Name = "Prediction", Min = 0, Max = 0.5, Default = 0, Callback = function(v) aimbotSettings.Prediction = v end })
+AimbotTab:CreateSlider({ Name = "Smooth", range = {0, 1 }, increment = 0.1, Default = 1, Callback = function(v) aimbotSettings.Smoothness = v end })
+AimbotTab:CreateSlider({ Name = "Prediction", range = {0, 0.5}, increment = 0.01, Default = 0, Callback = function(v) aimbotSettings.Prediction = v end })
 AimbotTab:CreateDropdown({ Name = "Aim Part", Options = {"Head", "HumanoidRootPart"}, Default = "Head", Callback = function(v) aimbotSettings.AimPart = v; LockedTarget = nil end })
 
 local function IsDead(character)
@@ -1624,8 +1667,8 @@ LimbsTab:CreateToggle({ Name = "Team Check", Default = le:Get("TEAM_CHECK"), Cal
 LimbsTab:CreateToggle({ Name = "ForceField Check", Default = le:Get("FORCEFIELD_CHECK"), Callback = function(v) le:Set("FORCEFIELD_CHECK", v) end })
 LimbsTab:CreateToggle({ Name = "Limb Collisions", Default = le:Get("LIMB_CAN_COLLIDE"), Callback = function(v) le:Set("LIMB_CAN_COLLIDE", v) end })
 LimbsTab:CreateSection("Settings")
-LimbsTab:CreateSlider({ Name = "Limb Size", Min = 5, Max = 500, Default = le:Get("LIMB_SIZE"), Callback = function(v) le:Set("LIMB_SIZE", v) end })
-LimbsTab:CreateSlider({ Name = "Limb Transparency", Min = 0, Max = 1, Default = le:Get("LIMB_TRANSPARENCY"), Callback = function(v) le:Set("LIMB_TRANSPARENCY", v) end })
+LimbsTab:CreateSlider({ Name = "Limb Size", range = {15, 500}, increment = 5, Default = le:Get("LIMB_SIZE"), Callback = function(v) le:Set("LIMB_SIZE", v) end })
+LimbsTab:CreateSlider({ Name = "Limb Transparency", range = {0, 1}, increment = 0.1, Default = le:Get("LIMB_TRANSPARENCY"), Callback = function(v) le:Set("LIMB_TRANSPARENCY", v) end })
 
 -- Dropdown động cho Target Limb
 LimbsTab:CreateDropdown({
@@ -1671,8 +1714,8 @@ LimbsTab:CreateToggle({ Name = "Enable NPC Hitbox", Default = false, Callback = 
     end
 end })
 
-LimbsTab:CreateSlider({ Name = "NPC Hitbox Size", Min = 5, Max = 100, Default = 5, Callback = function(v) npcLimbSettings.HitboxSize = v end })
-LimbsTab:CreateSlider({ Name = "NPC Transparency", Min = 0, Max = 1, Default = 0.9, Callback = function(v) npcLimbSettings.Transparency = v end })
+LimbsTab:CreateSlider({ Name = "NPC Hitbox Size", range = {5, 500}, increment = 5, Default = 5, Callback = function(v) npcLimbSettings.HitboxSize = v end })
+LimbsTab:CreateSlider({ Name = "NPC Transparency", range = {0, 1}, increment = 0.1, Default = 0.9, Callback = function(v) npcLimbSettings.Transparency = v end })
 LimbsTab:CreateToggle({ Name = "NPC Team Check", Default = false, Callback = function(v) npcLimbSettings.TeamCheck = v end })
 LimbsTab:CreateToggle({ Name = "NPC Collision", Default = false, Callback = function(v) npcLimbSettings.Collision = v end })
 
@@ -1955,15 +1998,15 @@ local isAiming = false
 local aimStr = 0.4
 
 PeopleTab:CreateToggle({ Name = "Follow Player", Default = false, Callback = function(v) isFollowing = v end })
-PeopleTab:CreateSlider({ Name = "Follow Speed", Min = 5, Max = 1000, Default = 20, Callback = function(v) followSpd = v end })
+PeopleTab:CreateSlider({ Name = "Follow Speed", range = {5, 1000}, increment = 5, Default = 20, Callback = function(v) followSpd = v end })
 PeopleTab:CreateToggle({ Name = "Orbit Player", Default = false, Callback = function(v) isOrbiting = v end })
-PeopleTab:CreateSlider({ Name = "Orbit Radius", Min = 1, Max = 1000, Default = 10, Callback = function(v) orbitR = v end })
-PeopleTab:CreateSlider({ Name = "Orbit Speed", Min = 1, Max = 1000, Default = 30, Callback = function(v) orbitSpd = v end })
-PeopleTab:CreateSlider({ Name = "Orbit Height", Min = -200, Max = 200, Default = 0, Callback = function(v) orbitY = v end })
+PeopleTab:CreateSlider({ Name = "Orbit Radius", range = {1, 1000}, increment = 1, Default = 10, Callback = function(v) orbitR = v end })
+PeopleTab:CreateSlider({ Name = "Orbit Speed", range = {1, 1000}, increment = 1, Default = 30, Callback = function(v) orbitSpd = v end })
+PeopleTab:CreateSlider({ Name = "Orbit Height", range = {-200, 200}, increment = 1, Default = 0, Callback = function(v) orbitY = v end })
 
 PeopleTab:CreateSection("Camera Aim")
 PeopleTab:CreateToggle({ Name = "Aim at Player", Default = false, Callback = function(v) isAiming = v end })
-PeopleTab:CreateSlider({ Name = "Aim Strength", Min = 0.1, Max = 1, Default = 0.35, Callback = function(v) aimStr = v end })
+PeopleTab:CreateSlider({ Name = "Aim Strength", range = {0, 1}, increment = 0.1, Default = 0.35, Callback = function(v) aimStr = v end })
 
 PeopleTab:CreateSection("Spectate")
 

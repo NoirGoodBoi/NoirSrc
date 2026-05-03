@@ -5,10 +5,11 @@ local NoirUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGo
 local Window = NoirUI:CreateWindow({
     Name = "🔥 NOIR HUB 🔥",
     Accent = Color3.fromRGB(255, 50, 100),
-    LogoID = nil,
     Icon = "👑",
+    LogoID = nil,
     DefaultPosition = UDim2.new(0.5, -210, 0.5, -150),
     FloatDefaultPosition = UDim2.new(0, 15, 0.5, -22),
+    KeySystem = false,
 })
 
 -- ========== SERVICES ==========
@@ -26,6 +27,12 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local mouse = LocalPlayer:GetMouse()
 
+-- ========== NOTIFICATION ==========
+task.wait(1)
+NoirUI:Notify("🔥 NOIR HUB", "Loading successful ! 🤫🧏")
+task.wait(0.5)
+NoirUI:Notify("🔥 NOIR HUB", "Thanks to use Script by Noir & Binbeo 👻🤡")
+
 -- ========== TAO TABS ==========
 local MainTab = Window:CreateTab("Main", "home")
 local PlayerTab = Window:CreateTab("Player", "user")
@@ -38,12 +45,6 @@ local ScriptsTab = Window:CreateTab("Scripts", "file-text")
 local PacksTab = Window:CreateTab("Packs", "package")
 local PeopleTab = Window:CreateTab("People", "users")
 local UtilitiesTab = Window:CreateTab("Utilities", "wrench")
-
--- ========== NOTIFICATION ==========
-task.wait(1)
-NoirUI:Notify("🔥 NOIR HUB", "Loading successful ! 🤫🧏")
-task.wait(0.5)
-NoirUI:Notify("🔥 NOIR HUB", "Thanks to use Script by Noir & Binbeo 👻🤡")
 
 -- ======================== MAIN TAB ========================
 MainTab:CreateSection("Server")
@@ -812,8 +813,7 @@ RunService.Heartbeat:Connect(function()
                     hrp.Anchored = true
                     task.spawn(function()
                         task.wait(0.1)
-                        if hrp then hrp.Anchored = false end
-                    end)
+                        if hrp then hrp.Anchored = false end                    end)
                     AntiFlingData.FlingCount = AntiFlingData.FlingCount + 1
                     if now - AntiFlingData.LastAlertTime > 3 then
                         AntiFlingData.LastAlertTime = now
@@ -1060,6 +1060,7 @@ FPSTab:CreateButton({
     end,
 })
 
+-- Stats
 FPSTab:CreateSection("Performance")
 
 local statsGUI = nil
@@ -2028,37 +2029,29 @@ PeopleTab:CreateSection("Player List")
 
 local selectedTarget = nil
 local loopTP = false
-local currentDropdown = nil
 
-local function createPlayerDropdown()
-    if currentDropdown and currentDropdown.Destroy then currentDropdown:Destroy() end
-    local options = {}
-    for _, plr in ipairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer then
-            table.insert(options, plr.DisplayName .. " [@" .. plr.Name .. "]")
-        end
-    end
-    if #options == 0 then table.insert(options, "No players") end
-    currentDropdown = PeopleTab:CreateDropdown({
-        Name = "Select Player",
-        Options = options,
-        Default = options[1] or "",
-        Callback = function(opt)
-            if opt and opt ~= "No players" then
-                local name = opt:match("%[@(.-)%]") or opt
-                selectedTarget = name
-                NoirUI:Notify("Selected", "Da chon: " .. name)
+-- DROPDOWN ĐỘNG THEO ĐÚNG DOCS MỚI
+local playerDropdown = PeopleTab:CreateDropdown({
+    Name = "Select Player",
+    GetOptions = function()
+        local opts = {}
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer then
+                table.insert(opts, plr.DisplayName .. " [@" .. plr.Name .. "]")
             end
         end
-    })
-end
-
-createPlayerDropdown()
-
-PeopleTab:CreateButton({ Name = "🔄 Refresh Player List", Callback = function()
-    createPlayerDropdown()
-    NoirUI:Notify("Refresh", "Da cap nhat danh sach")
-end })
+        if #opts == 0 then table.insert(opts, "No players") end
+        return opts
+    end,
+    RefreshOnOpen = true,
+    Callback = function(opt)
+        if opt and opt ~= "No players" then
+            local name = opt:match("%[@(.-)%]") or opt
+            selectedTarget = name
+            NoirUI:Notify("Selected", "Da chon: " .. name)
+        end
+    end
+})
 
 PeopleTab:CreateButton({ Name = "📡 TP to Selected", Callback = function()
     local target = selectedTarget and Players:FindFirstChild(selectedTarget)
@@ -2146,12 +2139,12 @@ end
 
 btnLeft.MouseButton1Click:Connect(function()
     local i, list = getTargetIndex()
-    if i and list[i-1] then selectedTarget = list[i-1].Name; createPlayerDropdown() end
+    if i and list[i-1] then selectedTarget = list[i-1].Name end
 end)
 
 btnRight.MouseButton1Click:Connect(function()
     local i, list = getTargetIndex()
-    if i and list[i+1] then selectedTarget = list[i+1].Name; createPlayerDropdown() end
+    if i and list[i+1] then selectedTarget = list[i+1].Name end
 end)
 
 PeopleTab:CreateToggle({ Name = "Spectate Player", Default = false, Callback = function(state)
@@ -2223,7 +2216,11 @@ end
 
 local function utilGetPlayerList()
     local list = {}
-    for _, plr in pairs(Players:GetPlayers()) do table.insert(list, plr.DisplayName .. " [@" .. plr.Name .. "]") end
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr ~= LocalPlayer then
+            table.insert(list, plr.DisplayName .. " [@" .. plr.Name .. "]")
+        end
+    end
     return list
 end
 
@@ -2274,25 +2271,28 @@ UtilitiesTab:CreateInput({
     end
 })
 
+-- DROPDOWN ĐỘNG THEO ĐÚNG DOCS MỚI
 local utilDropdown = UtilitiesTab:CreateDropdown({
     Name = "Select Player",
-    Options = utilGetPlayerList(),
-    Default = "",
+    GetOptions = function()
+        local opts = {}
+        for _, plr in ipairs(Players:GetPlayers()) do
+            if plr ~= LocalPlayer then
+                table.insert(opts, plr.DisplayName .. " [@" .. plr.Name .. "]")
+            end
+        end
+        if #opts == 0 then table.insert(opts, "No players") end
+        return opts
+    end,
+    RefreshOnOpen = true,
     Callback = function(opt)
-        if opt and opt ~= "" then
+        if opt and opt ~= "No players" then
             local name = opt:match("%[@(.-)%]") or opt
             utilSelectedPlayer = Players:FindFirstChild(name)
             if utilSelectedPlayer then NoirUI:Notify("Selected", utilSelectedPlayer.DisplayName) end
         end
     end
 })
-
-local function refreshUtilDropdown()
-    utilDropdown:Refresh(utilGetPlayerList())
-end
-Players.PlayerAdded:Connect(refreshUtilDropdown)
-Players.PlayerRemoving:Connect(refreshUtilDropdown)
-refreshUtilDropdown()
 
 UtilitiesTab:CreateButton({ Name = "📋 Copy Selected Player Name", Callback = utilCopyName })
 UtilitiesTab:CreateButton({ Name = "📍 Copy Selected Player Position", Callback = utilCopyPosition })
@@ -2372,8 +2372,13 @@ UtilitiesTab:CreateInput({
 
 savedDropdown = UtilitiesTab:CreateDropdown({
     Name = "Load Saved Position",
-    Options = {"No saved positions"},
-    Default = "No saved positions",
+    GetOptions = function()
+        local opts = {}
+        for name in pairs(savedPositions) do table.insert(opts, name) end
+        if #opts == 0 then table.insert(opts, "No saved positions") end
+        return opts
+    end,
+    RefreshOnOpen = true,
     Callback = function(opt)
         if opt and opt ~= "No saved positions" then
             local pos = savedPositions[opt]

@@ -1624,36 +1624,37 @@ LimbsTab:CreateSection("Settings")
 LimbsTab:CreateSlider({ Name = "Limb Size", Min = 5, Max = 500, Default = le:Get("LIMB_SIZE"), Callback = function(v) le:Set("LIMB_SIZE", v) end })
 LimbsTab:CreateSlider({ Name = "Limb Transparency", Min = 0, Max = 1, Default = le:Get("LIMB_TRANSPARENCY"), Callback = function(v) le:Set("LIMB_TRANSPARENCY", v) end })
 
-local TargetLimb = LimbsTab:CreateDropdown({
+-- Dropdown động cho Target Limb
+LimbsTab:CreateDropdown({
     Name = "Target Limb",
-    Options = {},
-    Default = le:Get("TARGET_LIMB"),
-    Callback = function(opt) le:Set("TARGET_LIMB", opt) end
+    GetOptions = function()
+        local opts = {}
+        local char = LocalPlayer.Character
+        if char then
+            for _, part in pairs(char:GetChildren()) do
+                if part:IsA("BasePart") then
+                    table.insert(opts, part.Name)
+                end
+            end
+        end
+        table.sort(opts)
+        if #opts == 0 then table.insert(opts, "No limbs found") end
+        return opts
+    end,
+    RefreshOnOpen = true,
+    Callback = function(selected)
+        if selected and selected ~= "No limbs found" then
+            le:Set("TARGET_LIMB", selected)
+        end
+    end
 })
 
-local limbsList = {}
-local function addLimbIfNew(name)
-    if not table.find(limbsList, name) then
-        table.insert(limbsList, name)
-        table.sort(limbsList)
-        TargetLimb:Refresh(limbsList)
-    end
-end
-
-local function onCharacterAdded(Character)
-    for _, part in ipairs(Character:GetChildren()) do if part:IsA("BasePart") then addLimbIfNew(part.Name) end end
-    Character.ChildAdded:Connect(function(child) if child:IsA("BasePart") then addLimbIfNew(child.Name) end end)
-end
-
-LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
-if LocalPlayer.Character then onCharacterAdded(LocalPlayer.Character) end
-
-LimbsTab:CreateSection("NPC")
+LimbsTab:CreateSection("NPC Hitbox")
 
 local npcLimbSettings = { Enabled = false, HitboxSize = 5, Transparency = 0.9, SelectedPart = "HumanoidRootPart", TeamCheck = false, Collision = false }
 local OldSizes = {}
 
-LimbsTab:CreateToggle({ Name = "Enable Limb NPC", Default = false, Callback = function(v)
+LimbsTab:CreateToggle({ Name = "Enable NPC Hitbox", Default = false, Callback = function(v)
     npcLimbSettings.Enabled = v
     if not v then
         for part, data in pairs(OldSizes) do
@@ -1666,10 +1667,11 @@ LimbsTab:CreateToggle({ Name = "Enable Limb NPC", Default = false, Callback = fu
         OldSizes = {}
     end
 end })
-LimbsTab:CreateSlider({ Name = "Limb Size", Min = 5, Max = 100, Default = 5, Callback = function(v) npcLimbSettings.HitboxSize = v end })
-LimbsTab:CreateSlider({ Name = "Transparency Limb", Min = 0, Max = 1, Default = 0.9, Callback = function(v) npcLimbSettings.Transparency = v end })
-LimbsTab:CreateToggle({ Name = "Team Check", Default = false, Callback = function(v) npcLimbSettings.TeamCheck = v end })
-LimbsTab:CreateToggle({ Name = "Collision Check", Default = false, Callback = function(v) npcLimbSettings.Collision = v end })
+
+LimbsTab:CreateSlider({ Name = "NPC Hitbox Size", Min = 5, Max = 100, Default = 5, Callback = function(v) npcLimbSettings.HitboxSize = v end })
+LimbsTab:CreateSlider({ Name = "NPC Transparency", Min = 0, Max = 1, Default = 0.9, Callback = function(v) npcLimbSettings.Transparency = v end })
+LimbsTab:CreateToggle({ Name = "NPC Team Check", Default = false, Callback = function(v) npcLimbSettings.TeamCheck = v end })
+LimbsTab:CreateToggle({ Name = "NPC Collision", Default = false, Callback = function(v) npcLimbSettings.Collision = v end })
 
 task.spawn(function()
     while task.wait(0.5) do
@@ -1902,7 +1904,8 @@ PeopleTab:CreateSection("Player List")
 local selectedTarget = nil
 local loopTP = false
 
-local playerDropdown = PeopleTab:CreateDropdown({
+-- Dropdown động theo đúng docs
+PeopleTab:CreateDropdown({
     Name = "Select Player",
     GetOptions = function()
         local opts = {}
@@ -1915,9 +1918,9 @@ local playerDropdown = PeopleTab:CreateDropdown({
         return opts
     end,
     RefreshOnOpen = true,
-    Callback = function(opt)
-        if opt and opt ~= "No players" then
-            local name = opt:match("%[@(.-)%]") or opt
+    Callback = function(selected)
+        if selected and selected ~= "No players" then
+            local name = selected:match("%[@(.-)%]") or selected
             selectedTarget = name
             NoirUI:Notify("Selected", "Da chon: " .. name)
         end
@@ -2070,3 +2073,7 @@ RunService.RenderStepped:Connect(function()
         specAvatar.Image = ""
     end
 end)
+
+-- ========== NOTIFICATION ==========
+task.wait(2)
+NoirUI:Notify("🔥 NOIR HUB", "Da tai thanh cong!")

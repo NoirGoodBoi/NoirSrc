@@ -381,6 +381,7 @@ PlayerTab:CreateToggle({
 
 PlayerTab:CreateButton({
     Name = "ShiftLock",
+    Align = false,
     Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/NoirScripts/main/Shift_Lock"))() end,
 })
 
@@ -569,6 +570,7 @@ PlayerTab:CreateToggle({
 
 PlayerTab:CreateButton({
     Name = "Lock First Person",
+    Align = false,
     Callback = function()
         LocalPlayer.CameraMode = Enum.CameraMode.LockFirstPerson
         LocalPlayer.CameraMinZoomDistance = 0
@@ -635,6 +637,7 @@ PlayerTab:CreateToggle({ Name = "Smart Anti TP", Default = false, Callback = fun
 
 PlayerTab:CreateButton({
     Name = "Anti AFK",
+    Align = false,
     Callback = function()
         if AntiAFKActive then return end
         AntiAFKActive = true
@@ -1892,9 +1895,9 @@ local function getFarthestPlayer()
     return best
 end
 
-PeopleTab:CreateButton({ Name = "TP to Nearest", Callback = function() local p = getNearestPlayer(); if p then tpToPlayer(p) end end })
-PeopleTab:CreateButton({ Name = "TP to Farthest", Callback = function() local p = getFarthestPlayer(); if p then tpToPlayer(p) end end })
-PeopleTab:CreateButton({ Name = "TP to Random", Callback = function()
+PeopleTab:CreateButton({ Name = "TP to Nearest", Align = false, Callback = function() local p = getNearestPlayer(); if p then tpToPlayer(p) end end })
+PeopleTab:CreateButton({ Name = "TP to Farthest", Align = false, Callback = function() local p = getFarthestPlayer(); if p then tpToPlayer(p) end end })
+PeopleTab:CreateButton({ Name = "TP to Random", Align = false, Callback = function()
     local list = getAllPlayers()
     if #list > 0 then tpToPlayer(list[math.random(1, #list)]) end
 end })
@@ -1927,7 +1930,7 @@ PeopleTab:CreateDropdown({
     end
 })
 
-PeopleTab:CreateButton({ Name = "📡 TP to Selected", Callback = function()
+PeopleTab:CreateButton({ Name = "📡 TP to Selected", Align = false, Callback = function()
     local target = selectedTarget and Players:FindFirstChild(selectedTarget)
     if target then
         tpToPlayer(target)

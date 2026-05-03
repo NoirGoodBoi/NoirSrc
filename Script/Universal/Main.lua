@@ -37,6 +37,7 @@ local GamesTab = Window:CreateTab("Games", "gamepad-2")
 local ScriptsTab = Window:CreateTab("Scripts", "file-text")
 local PacksTab = Window:CreateTab("Packs", "package")
 local PeopleTab = Window:CreateTab("People", "users")
+local UtilitiesTab = Window:CreateTab("Utilities", "wrench")
 
 -- ========== NOTIFICATION ==========
 task.wait(1)
@@ -298,6 +299,7 @@ PlayerTab:CreateToggle({
     Callback = function(state) if state then startAutoJump() else stopAutoJump() end end
 })
 
+-- Dash
 local dashLength = 5
 local dashTime = 0.05
 local yBoost = 20
@@ -337,9 +339,9 @@ local function createDashButton()
     btn.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
     Instance.new("UICorner", btn).CornerRadius = UDim.new(1, 0)
-    local stroke = Instance.new("UIStroke", btn)
-    stroke.Thickness = 2
-    stroke.Color = Color3.fromRGB(90, 90, 90)
+    local st = Instance.new("UIStroke", btn)
+    st.Thickness = 2
+    st.Color = Color3.fromRGB(90, 90, 90)
     btn.Active = true
     btn.Draggable = true
     btn.MouseButton1Click:Connect(Dash)
@@ -429,6 +431,7 @@ PlayerTab:CreateToggle({
     Callback = function(state) if state then enableInstant() else disableInstant() end end
 })
 
+-- Crosshair
 local crosshairEnabled = false
 local crosshair = Drawing.new("Circle")
 crosshair.Visible = false
@@ -507,6 +510,166 @@ PlayerTab:CreateToggle({
 PlayerTab:CreateButton({
     Name = "ShiftLock",
     Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/NoirScripts/main/Shift_Lock"))() end,
+})
+
+-- Minimap
+PlayerTab:CreateSection("Map")
+
+local MapGui, MapFrame, InfoPanel = nil, nil, nil
+local MapObjects = {}
+local MapEnabled = false
+local RenderConnection
+local Zoom = 4
+local SmoothYaw = 0
+local CurrentTarget = nil
+local TPMode = false
+
+local function createMap()
+    MapGui = Instance.new("ScreenGui")
+    MapGui.IgnoreGuiInset = true
+    MapGui.ResetOnSpawn = false
+    MapGui.Parent = game.CoreGui
+    MapFrame = Instance.new("Frame")
+    MapFrame.Size = UDim2.new(0,150,0,150)
+    MapFrame.Position = UDim2.new(1,-160,0,10)
+    MapFrame.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    MapFrame.BackgroundTransparency = 0.4
+    MapFrame.BorderSizePixel = 0
+    MapFrame.ClipsDescendants = true
+    MapFrame.Parent = MapGui
+    Instance.new("UICorner", MapFrame)
+    local tpBtn = Instance.new("TextButton")
+    tpBtn.Size = UDim2.new(0,150,0,30)
+    tpBtn.Position = UDim2.new(1,-160,0,165)
+    tpBtn.BackgroundColor3 = Color3.fromRGB(30,30,30)
+    tpBtn.TextColor3 = Color3.new(1,1,1)
+    tpBtn.Text = "TP: OFF"
+    tpBtn.Parent = MapGui
+    Instance.new("UICorner", tpBtn)
+    tpBtn.MouseButton1Click:Connect(function()
+        TPMode = not TPMode
+        tpBtn.Text = TPMode and "TP: ON" or "TP: OFF"
+    end)
+    InfoPanel = Instance.new("Frame")
+    InfoPanel.Size = UDim2.new(0,170,0,95)
+    InfoPanel.Position = UDim2.new(1,-340,0,10)
+    InfoPanel.BackgroundColor3 = Color3.fromRGB(0,0,0)
+    InfoPanel.BackgroundTransparency = 0.3
+    InfoPanel.Visible = false
+    InfoPanel.Parent = MapGui
+    Instance.new("UICorner", InfoPanel)
+    local nameLabel = Instance.new("TextLabel")
+    nameLabel.Name = "PlayerName"
+    nameLabel.Size = UDim2.new(1,0,0.4,0)
+    nameLabel.BackgroundTransparency = 1
+    nameLabel.TextColor3 = Color3.new(1,1,1)
+    nameLabel.TextScaled = true
+    nameLabel.Parent = InfoPanel
+    local hp = Instance.new("TextLabel")
+    hp.Name = "HP"
+    hp.Size = UDim2.new(1,0,0.3,0)
+    hp.Position = UDim2.new(0,0,0.4,0)
+    hp.BackgroundTransparency = 1
+    hp.TextColor3 = Color3.new(0,1,0)
+    hp.TextScaled = true
+    hp.Parent = InfoPanel
+    local dist = Instance.new("TextLabel")
+    dist.Name = "Distance"
+    dist.Size = UDim2.new(1,0,0.3,0)
+    dist.Position = UDim2.new(0,0,0.7,0)
+    dist.BackgroundTransparency = 1
+    dist.TextColor3 = Color3.new(1,1,0)
+    dist.TextScaled = true
+    dist.Parent = InfoPanel
+end
+
+local function createDot(player)
+    if MapObjects[player] then return end
+    local dot = Instance.new("ImageButton")
+    dot.Size = UDim2.new(0,20,0,20)
+    dot.AnchorPoint = Vector2.new(0.5,0.5)
+    dot.BackgroundTransparency = 1
+    dot.Parent = MapFrame
+    dot.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..player.UserId.."&width=150&height=150&format=png"
+    Instance.new("UICorner", dot)
+    dot.MouseButton1Click:Connect(function()
+        if TPMode then
+            local myChar = LocalPlayer.Character
+            local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+            local char = player.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if myHRP and hrp then myHRP.CFrame = hrp.CFrame + Vector3.new(0,3,0) end
+            return
+        end
+        if CurrentTarget == player then
+            CurrentTarget = nil
+            InfoPanel.Visible = false
+        else
+            CurrentTarget = player
+            InfoPanel.Visible = true
+            InfoPanel.PlayerName.Text = player.DisplayName.." (@"..player.Name..")"
+        end
+    end)
+    MapObjects[player] = dot
+end
+
+local function updateDots(dt)
+    if not MapEnabled then return end
+    local char = LocalPlayer.Character
+    local center = char and char:FindFirstChild("HumanoidRootPart")
+    if not center then return end
+    local targetYaw = math.atan2(Camera.CFrame.LookVector.Z, Camera.CFrame.LookVector.X)
+    SmoothYaw = SmoothYaw + (targetYaw - SmoothYaw) * math.clamp(dt * 8, 0, 1)
+    for player, dot in pairs(MapObjects) do
+        local char = player.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local offset = (hrp.Position - center.Position) / Zoom
+            local rx = offset.X*math.cos(SmoothYaw) + offset.Z*math.sin(SmoothYaw)
+            local rz = -offset.X*math.sin(SmoothYaw) + offset.Z*math.cos(SmoothYaw)
+            if math.abs(rx) <= 70 and math.abs(rz) <= 70 then
+                dot.Visible = true
+                dot.Position = UDim2.new(0.5, rx, 0.5, rz)
+            else
+                dot.Visible = false
+            end
+        else
+            dot.Visible = false
+        end
+        if player == CurrentTarget then dot.ImageColor3 = Color3.fromRGB(255,100,100)
+        else dot.ImageColor3 = Color3.fromRGB(255,255,255) end
+    end
+    if CurrentTarget and InfoPanel.Visible then
+        local myChar = LocalPlayer.Character
+        local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+        local char = CurrentTarget.Character
+        local hrp = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if hum then InfoPanel.HP.Text = "HP: "..math.floor(hum.Health) else InfoPanel.HP.Text = "HP: N/A" end
+        if myHRP and hrp then InfoPanel.Distance.Text = "Dist: "..math.floor((hrp.Position - myHRP.Position).Magnitude).."m"
+        else InfoPanel.Distance.Text = "Dist: N/A" end
+    end
+end
+
+local function initMap()
+    createMap()
+    for _,p in pairs(Players:GetPlayers()) do createDot(p) end
+    Players.PlayerAdded:Connect(createDot)
+    Players.PlayerRemoving:Connect(function(p)
+        if MapObjects[p] then MapObjects[p]:Destroy(); MapObjects[p] = nil end
+        if CurrentTarget == p then CurrentTarget = nil; InfoPanel.Visible = false end
+    end)
+    RenderConnection = RunService.RenderStepped:Connect(updateDots)
+end
+
+PlayerTab:CreateToggle({
+    Name = "MiniMap",
+    Default = false,
+    Callback = function(state)
+        MapEnabled = state
+        if state then if not MapGui then initMap() end; MapGui.Enabled = true
+        else if MapGui then MapGui.Enabled = false end; if RenderConnection then RenderConnection:Disconnect(); RenderConnection = nil end end
+    end
 })
 
 PlayerTab:CreateSection("Camera")
@@ -691,7 +854,7 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ======================== FPS TAB ========================
-FPSTab:CreateSection("Fullbright")
+FPSTab:CreateSection("Other")
 
 local oldBrightness = Lighting.Brightness
 local oldClockTime = Lighting.ClockTime
@@ -734,14 +897,13 @@ FPSTab:CreateSlider({
 
 local removedFogEffects = {}
 local oldFogStart = Lighting.FogStart
-local oldFogEndRemove = Lighting.FogEnd
 
 FPSTab:CreateToggle({
     Name = "Remove Fog",
     Default = false,
     Callback = function(v)
         if v then
-            oldFogEndRemove = Lighting.FogEnd
+            oldFogEnd = Lighting.FogEnd
             oldFogStart = Lighting.FogStart
             Lighting.FogEnd = 100000
             Lighting.FogStart = 0
@@ -752,7 +914,7 @@ FPSTab:CreateToggle({
                 end
             end
         else
-            Lighting.FogEnd = oldFogEndRemove
+            Lighting.FogEnd = oldFogEnd
             Lighting.FogStart = oldFogStart
             for obj, parent in pairs(removedFogEffects) do
                 pcall(function() if obj then obj.Parent = parent end end)
@@ -839,14 +1001,13 @@ FPSTab:CreateToggle({
 
 local ultraBoostEffects = {}
 local ultraBoostConnection = nil
-local oldUltraFogEnd = Lighting.FogEnd
-local oldUltraFogStart = Lighting.FogStart
 
 local function ultraDisableEffects(obj)
     if not obj or not obj.Parent then return end
     if obj:IsA("ParticleEmitter") or obj:IsA("Trail") or obj:IsA("Smoke") or obj:IsA("Fire") or obj:IsA("Sparkles") or (obj:IsA("BasePart") and obj.Material == Enum.Material.Neon) then
         if not ultraBoostEffects[obj] then
-            if obj:IsA("BasePart") then                ultraBoostEffects[obj] = obj.Material
+            if obj:IsA("BasePart") then
+                ultraBoostEffects[obj] = obj.Material
                 obj.Material = Enum.Material.SmoothPlastic
             else
                 ultraBoostEffects[obj] = obj.Enabled
@@ -877,8 +1038,6 @@ FPSTab:CreateToggle({
     Default = false,
     Callback = function(v)
         if v then
-            oldUltraFogEnd = Lighting.FogEnd
-            oldUltraFogStart = Lighting.FogStart
             Lighting.GlobalShadows = false
             Lighting.FogEnd = 100
             Lighting.FogStart = 10000
@@ -886,8 +1045,8 @@ FPSTab:CreateToggle({
             ultraBoostConnection = game.DescendantAdded:Connect(ultraDisableEffects)
         else
             Lighting.GlobalShadows = true
-            Lighting.FogEnd = oldUltraFogEnd
-            Lighting.FogStart = oldUltraFogStart
+            Lighting.FogEnd = oldFogEnd
+            Lighting.FogStart = oldFogStart
             if ultraBoostConnection then ultraBoostConnection:Disconnect(); ultraBoostConnection = nil end
             ultraEnableEffects()
         end
@@ -1011,15 +1170,13 @@ local nameMode = 2
 local function getName(plr)
     if nameMode == 1 then return "@"..plr.Name
     elseif nameMode == 2 then return plr.DisplayName
-    else return plr.DisplayName.." (@"..plr.Name..")"
-    end
+    else return plr.DisplayName.." (@"..plr.Name..")" end
 end
 
 local function getESPColor(plr)
     if plr.Team ~= nil and LocalPlayer.Team ~= nil then
         if plr.Team == LocalPlayer.Team then return Color3.fromRGB(0, 255, 0)
-        else return Color3.fromRGB(255, 0, 0)
-        end
+        else return Color3.fromRGB(255, 0, 0) end
     end
     return Color3.fromRGB(0, 255, 0)
 end
@@ -1421,7 +1578,7 @@ VisualTab:CreateToggle({ Name = "Tracer + Box 2D (NPC)", Default = true, Callbac
 ScanNPCs()
 
 -- ======================== AIMBOT TAB ========================
-AimbotTab:CreateSection("Aimbot Settings")
+AimbotTab:CreateSection("Aimbot")
 
 local aimbotSettings = {
     Enabled = false, NPCEnabled = false, TeamCheck = true, WallCheck = true, DeathCheck = true,
@@ -1450,7 +1607,7 @@ stroke.Color = Color3.fromRGB(0, 255, 0)
 AimbotTab:CreateToggle({ Name = "Active Aimbot", Default = false, Callback = function(v) aimbotSettings.Enabled = v; if not v then LockedTarget = nil end end })
 AimbotTab:CreateToggle({ Name = "Aimbot NPC", Default = false, Callback = function(v) aimbotSettings.NPCEnabled = v; if not v then LockedTarget = nil end end })
 AimbotTab:CreateToggle({ Name = "Show FOV Circle", Default = false, Callback = function(v) FOVCircle.Visible = v end })
-AimbotTab:CreateSection("Checks")
+AimbotTab:CreateSection("Check")
 AimbotTab:CreateToggle({ Name = "Team Check", Default = true, Callback = function(v) aimbotSettings.TeamCheck = v end })
 AimbotTab:CreateToggle({ Name = "Wall Check", Default = true, Callback = function(v) aimbotSettings.WallCheck = v end })
 AimbotTab:CreateToggle({ Name = "Death Check", Default = true, Callback = function(v) aimbotSettings.DeathCheck = v end })
@@ -1580,13 +1737,13 @@ RunService.RenderStepped:Connect(function()
 end)
 
 -- ======================== LIMBS TAB ========================
-LimbsTab:CreateSection("Limb Settings")
+LimbsTab:CreateSection("Limbs")
 
 local LimbExtender = loadstring(game:HttpGet("https://raw.githubusercontent.com/AAPVdev/scripts/refs/heads/main/LimbExtender.lua"))()
 local le = LimbExtender({ LISTEN_FOR_INPUT = false, USE_HIGHLIGHT = false })
 
 LimbsTab:CreateToggle({ Name = "Modify Limbs", Default = false, Callback = function(v) le:Toggle(v) end })
-LimbsTab:CreateSection("Checks")
+LimbsTab:CreateSection("Check")
 LimbsTab:CreateToggle({ Name = "Team Check", Default = le:Get("TEAM_CHECK"), Callback = function(v) le:Set("TEAM_CHECK", v) end })
 LimbsTab:CreateToggle({ Name = "ForceField Check", Default = le:Get("FORCEFIELD_CHECK"), Callback = function(v) le:Set("FORCEFIELD_CHECK", v) end })
 LimbsTab:CreateToggle({ Name = "Limb Collisions", Default = le:Get("LIMB_CAN_COLLIDE"), Callback = function(v) le:Set("LIMB_CAN_COLLIDE", v) end })
@@ -1594,13 +1751,19 @@ LimbsTab:CreateSection("Settings")
 LimbsTab:CreateSlider({ Name = "Limb Size", Min = 5, Max = 500, Default = le:Get("LIMB_SIZE"), Callback = function(v) le:Set("LIMB_SIZE", v) end })
 LimbsTab:CreateSlider({ Name = "Limb Transparency", Min = 0, Max = 1, Default = le:Get("LIMB_TRANSPARENCY"), Callback = function(v) le:Set("LIMB_TRANSPARENCY", v) end })
 
-local TargetLimbDropdown
+local TargetLimb = LimbsTab:CreateDropdown({
+    Name = "Target Limb",
+    Options = {},
+    Default = le:Get("TARGET_LIMB"),
+    Callback = function(opt) le:Set("TARGET_LIMB", opt) end
+})
+
 local limbsList = {}
 local function addLimbIfNew(name)
     if not table.find(limbsList, name) then
         table.insert(limbsList, name)
         table.sort(limbsList)
-        if TargetLimbDropdown then TargetLimbDropdown:Refresh(limbsList) end
+        TargetLimb:Refresh(limbsList)
     end
 end
 
@@ -1609,19 +1772,16 @@ local function onCharacterAdded(Character)
     Character.ChildAdded:Connect(function(child) if child:IsA("BasePart") then addLimbIfNew(child.Name) end end)
 end
 
-TargetLimbDropdown = LimbsTab:CreateDropdown({
-    Name = "Target Limb", Options = {}, Default = le:Get("TARGET_LIMB"),
-    Callback = function(opt) le:Set("TARGET_LIMB", opt) end
-})
 LocalPlayer.CharacterAdded:Connect(onCharacterAdded)
 if LocalPlayer.Character then onCharacterAdded(LocalPlayer.Character) end
 
-LimbsTab:CreateSection("NPC Hitbox")
-local npcHitbox = { Enabled = false, Size = 5, Transparency = 0.9, Part = "HumanoidRootPart", TeamCheck = false, Collision = false }
+LimbsTab:CreateSection("NPC")
+
+local npcLimbSettings = { Enabled = false, HitboxSize = 5, Transparency = 0.9, SelectedPart = "HumanoidRootPart", TeamCheck = false, Collision = false }
 local OldSizes = {}
 
-LimbsTab:CreateToggle({ Name = "Enable NPC Hitbox", Default = false, Callback = function(v)
-    npcHitbox.Enabled = v
+LimbsTab:CreateToggle({ Name = "Enable Limb NPC", Default = false, Callback = function(v)
+    npcLimbSettings.Enabled = v
     if not v then
         for part, data in pairs(OldSizes) do
             if part and part.Parent then
@@ -1633,14 +1793,14 @@ LimbsTab:CreateToggle({ Name = "Enable NPC Hitbox", Default = false, Callback = 
         OldSizes = {}
     end
 end })
-LimbsTab:CreateSlider({ Name = "NPC Hitbox Size", Min = 5, Max = 100, Default = 5, Callback = function(v) npcHitbox.Size = v end })
-LimbsTab:CreateSlider({ Name = "NPC Transparency", Min = 0, Max = 1, Default = 0.9, Callback = function(v) npcHitbox.Transparency = v end })
-LimbsTab:CreateToggle({ Name = "NPC Team Check", Default = false, Callback = function(v) npcHitbox.TeamCheck = v end })
-LimbsTab:CreateToggle({ Name = "NPC Collision", Default = false, Callback = function(v) npcHitbox.Collision = v end })
+LimbsTab:CreateSlider({ Name = "Limb Size", Min = 5, Max = 100, Default = 5, Callback = function(v) npcLimbSettings.HitboxSize = v end })
+LimbsTab:CreateSlider({ Name = "Transparency Limb", Min = 0, Max = 1, Default = 0.9, Callback = function(v) npcLimbSettings.Transparency = v end })
+LimbsTab:CreateToggle({ Name = "Team Check", Default = false, Callback = function(v) npcLimbSettings.TeamCheck = v end })
+LimbsTab:CreateToggle({ Name = "Collision Check", Default = false, Callback = function(v) npcLimbSettings.Collision = v end })
 
 task.spawn(function()
     while task.wait(0.5) do
-        if npcHitbox.Enabled then
+        if npcLimbSettings.Enabled then
             for _, obj in pairs(workspace:GetDescendants()) do
                 if obj:IsA("Model") then
                     local hum = obj:FindFirstChildOfClass("Humanoid")
@@ -1648,18 +1808,18 @@ task.spawn(function()
                     if hum and not isPlayer then
                         local isShop = obj:FindFirstChildOfClass("ProximityPrompt") or obj:FindFirstChild("Shop")
                         local isEnemy = true
-                        if npcHitbox.TeamCheck then
+                        if npcLimbSettings.TeamCheck then
                             if obj:FindFirstChild("TeamColor") and obj.TeamColor == LocalPlayer.TeamColor then isEnemy = false end
                         end
                         if not isShop and isEnemy then
-                            local target = obj:FindFirstChild(npcHitbox.Part) or obj:FindFirstChild("HumanoidRootPart")
+                            local target = obj:FindFirstChild(npcLimbSettings.SelectedPart) or obj:FindFirstChild("HumanoidRootPart")
                             if target and target:IsA("BasePart") then
                                 if not OldSizes[target] then
                                     OldSizes[target] = { Size = target.Size, Transparency = target.Transparency, CanCollide = target.CanCollide }
                                 end
-                                target.Size = Vector3.new(npcHitbox.Size, npcHitbox.Size, npcHitbox.Size)
-                                target.Transparency = npcHitbox.Transparency
-                                target.CanCollide = npcHitbox.Collision
+                                target.Size = Vector3.new(npcLimbSettings.HitboxSize, npcLimbSettings.HitboxSize, npcLimbSettings.HitboxSize)
+                                target.Transparency = npcLimbSettings.Transparency
+                                target.CanCollide = npcLimbSettings.Collision
                                 target.Color = Color3.fromRGB(0,255,255)
                             end
                         end
@@ -1691,7 +1851,7 @@ GamesTab:CreateButton({ Name = "Bite By Night", Callback = function() loadstring
 GamesTab:CreateButton({ Name = "Murder Mystery 2 I", Callback = function() loadstring(game:HttpGet("https://pastefy.app/wwfom1bX/raw", true))() end })
 GamesTab:CreateButton({ Name = "Murder Mystery 2 II", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/mm2/refs/heads/main/bawe.lua", true))() end })
 
-GamesTab:CreateSection("Shooter/FPS")
+GamesTab:CreateSection("Shooter/FPS games")
 GamesTab:CreateButton({ Name = "Rivals", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/rivals/refs/heads/main/loot.lua"))() end })
 GamesTab:CreateButton({ Name = "Arsenal", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/Arsenal/refs/heads/main/nah.lua"))() end })
 
@@ -1734,7 +1894,7 @@ GamesTab:CreateButton({ Name = "Doors II", Callback = function() loadstring(game
 GamesTab:CreateSection("Fishing")
 GamesTab:CreateButton({ Name = "Fish It", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/fishit/refs/heads/main/nice.lua"))() end })
 
-GamesTab:CreateSection("Story")
+GamesTab:CreateSection("Story.")
 GamesTab:CreateButton({ Name = "Break In 1", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/Iptxt/AXHub-Loader/refs/heads/main/Loader"))() end })
 GamesTab:CreateButton({ Name = "Break In 2", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/EnesXVC/Breakin2/main/script"))() end })
 
@@ -1812,7 +1972,7 @@ PacksTab:CreateButton({ Name = "Krystal Dance v3", Callback = function() loadstr
 PacksTab:CreateSection("Shader")
 PacksTab:CreateButton({ Name = "Shaders Script", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/randomstring0/pshade-ultimate/refs/heads/main/src/cd.lua"))() end })
 
--- ======================== PEOPLE TAB (FIXED) ========================
+-- ======================== PEOPLE TAB ========================
 PeopleTab:CreateSection("Random")
 
 local function getTargetChar(p) return p and p.Character end
@@ -2046,3 +2206,240 @@ RunService.RenderStepped:Connect(function()
         specAvatar.Image = ""
     end
 end)
+
+-- ======================== UTILITIES TAB ========================
+UtilitiesTab:CreateSection("Player Info")
+
+local utilSelectedPlayer = nil
+
+local function utilFindPlayer(text)
+    if not text or text == "" then return nil end
+    text = text:lower()
+    for _, plr in pairs(Players:GetPlayers()) do
+        if plr.Name:lower():match(text) or plr.DisplayName:lower():match(text) then return plr end
+    end
+    return nil
+end
+
+local function utilGetPlayerList()
+    local list = {}
+    for _, plr in pairs(Players:GetPlayers()) do table.insert(list, plr.DisplayName .. " [@" .. plr.Name .. "]") end
+    return list
+end
+
+local function utilCopyName()
+    if utilSelectedPlayer then
+        setclipboard(utilSelectedPlayer.Name)
+        NoirUI:Notify("Copied", "Name: " .. utilSelectedPlayer.Name)
+    else
+        NoirUI:Notify("Error", "No player selected")
+    end
+end
+
+local function utilCopyPosition()
+    if utilSelectedPlayer and utilSelectedPlayer.Character then
+        local hrp = utilSelectedPlayer.Character:FindFirstChild("HumanoidRootPart")
+        if hrp then
+            local pos = hrp.Position
+            setclipboard(string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z))
+            NoirUI:Notify("Copied", "Position copied")
+        else
+            NoirUI:Notify("Error", "Cannot get position")
+        end
+    else
+        NoirUI:Notify("Error", "Player not found in game")
+    end
+end
+
+local function utilTeleportToCoordinates(x, y, z)
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CFrame = CFrame.new(x, y, z)
+        NoirUI:Notify("Teleported", string.format("To: %.1f, %.1f, %.1f", x, y, z))
+    end
+end
+
+UtilitiesTab:CreateInput({
+    Name = "Input Player Name",
+    PlaceholderText = "Type username or display name...",
+    Callback = function(text)
+        local plr = utilFindPlayer(text)
+        if plr then
+            utilSelectedPlayer = plr
+            NoirUI:Notify("Selected", plr.DisplayName .. " [@" .. plr.Name .. "]")
+        else
+            NoirUI:Notify("Not Found", "Player not found")
+        end
+    end
+})
+
+local utilDropdown = UtilitiesTab:CreateDropdown({
+    Name = "Select Player",
+    Options = utilGetPlayerList(),
+    Default = "",
+    Callback = function(opt)
+        if opt and opt ~= "" then
+            local name = opt:match("%[@(.-)%]") or opt
+            utilSelectedPlayer = Players:FindFirstChild(name)
+            if utilSelectedPlayer then NoirUI:Notify("Selected", utilSelectedPlayer.DisplayName) end
+        end
+    end
+})
+
+local function refreshUtilDropdown()
+    utilDropdown:Refresh(utilGetPlayerList())
+end
+Players.PlayerAdded:Connect(refreshUtilDropdown)
+Players.PlayerRemoving:Connect(refreshUtilDropdown)
+refreshUtilDropdown()
+
+UtilitiesTab:CreateButton({ Name = "📋 Copy Selected Player Name", Callback = utilCopyName })
+UtilitiesTab:CreateButton({ Name = "📍 Copy Selected Player Position", Callback = utilCopyPosition })
+
+UtilitiesTab:CreateSection("Map Teleport")
+
+local coordX, coordY, coordZ = 0, 0, 0
+
+UtilitiesTab:CreateInput({
+    Name = "Coordinates (X Y Z)",
+    PlaceholderText = "Example: 0 10 0 or -39.5 6.2 -84.7",
+    Callback = function(text)
+        local parts = {}
+        for num in string.gmatch(text, "[-]?%d+%.?%d*") do
+            table.insert(parts, tonumber(num))
+        end
+        coordX = parts[1] or 0
+        coordY = parts[2] or 10
+        coordZ = parts[3] or 0
+    end
+})
+
+UtilitiesTab:CreateButton({ Name = "🚀 Teleport to Position", Callback = function() utilTeleportToCoordinates(coordX, coordY, coordZ) end })
+UtilitiesTab:CreateButton({ Name = "📷 Copy Camera Position", Callback = function()
+    local pos = Camera.CFrame.Position
+    setclipboard(string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z))
+    NoirUI:Notify("Copied", "Camera position copied")
+end })
+
+local loopTeleportActive = false
+local loopTeleportConnection = nil
+
+UtilitiesTab:CreateToggle({
+    Name = "🔄 Loop Teleport (Every 0.5s)",
+    Default = false,
+    Callback = function(v)
+        loopTeleportActive = v
+        if v then
+            if loopTeleportConnection then loopTeleportConnection:Disconnect() end
+            loopTeleportConnection = RunService.Heartbeat:Connect(function()
+                if loopTeleportActive then utilTeleportToCoordinates(coordX, coordY, coordZ) end
+            end)
+        else
+            if loopTeleportConnection then loopTeleportConnection:Disconnect(); loopTeleportConnection = nil end
+        end
+    end
+})
+
+local savedPositions = {}
+local savedDropdown = nil
+
+local function refreshSavedDropdown()
+    if not savedDropdown then return end
+    local options = {}
+    for name in pairs(savedPositions) do table.insert(options, name) end
+    if #options == 0 then table.insert(options, "No saved positions") end
+    savedDropdown:Refresh(options)
+end
+
+UtilitiesTab:CreateInput({
+    Name = "Save Current Position As",
+    PlaceholderText = "Enter name to save...",
+    Callback = function(text)
+        if text and text ~= "" then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                savedPositions[text] = hrp.Position
+                refreshSavedDropdown()
+                NoirUI:Notify("Saved", "Position saved as: " .. text)
+            else
+                NoirUI:Notify("Error", "Cannot get current position")
+            end
+        end
+    end
+})
+
+savedDropdown = UtilitiesTab:CreateDropdown({
+    Name = "Load Saved Position",
+    Options = {"No saved positions"},
+    Default = "No saved positions",
+    Callback = function(opt)
+        if opt and opt ~= "No saved positions" then
+            local pos = savedPositions[opt]
+            if pos then utilTeleportToCoordinates(pos.X, pos.Y, pos.Z) end
+        end
+    end
+})
+
+UtilitiesTab:CreateButton({ Name = "🔄 Refresh Saved List", Callback = refreshSavedDropdown })
+
+UtilitiesTab:CreateSection("Tools")
+UtilitiesTab:CreateButton({ Name = "👆 Tap to Teleport", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/Funny_FE_Scripts/main/Tap_to_TP"))() end })
+UtilitiesTab:CreateButton({ Name = "📦 Inventory Viewer", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/Funny_FE_Scripts/main/Inventory_Viewer"))() end })
+UtilitiesTab:CreateButton({ Name = "💀 Reset Character", Callback = function() if LocalPlayer.Character then LocalPlayer.Character:BreakJoints(); NoirUI:Notify("Reset", "Character reset") end end })
+
+UtilitiesTab:CreateSection("Remote Spy")
+
+local spyEnabled = false
+local remoteLogs = {}
+local spyConnected = false
+
+local function addRemoteLog(remote, ...)
+    if not spyEnabled then return end
+    local args = {...}
+    table.insert(remoteLogs, 1, { Time = os.date("%H:%M:%S"), Remote = tostring(remote), Arguments = args })
+    while #remoteLogs > 50 do table.remove(remoteLogs) end
+end
+
+local function setupRemoteSpy()
+    if spyConnected then return end
+    pcall(function()
+        local mt = getrawmetatable(game)
+        if mt then
+            setreadonly(mt, false)
+            local oldNamecall = mt.__namecall
+            mt.__namecall = function(self, ...)
+                local method = getnamecallmethod()
+                if (method == "FireServer" or method == "InvokeServer") and spyEnabled then
+                    addRemoteLog(self, ...)
+                end
+                return oldNamecall(self, ...)
+            end
+            setreadonly(mt, true)
+            spyConnected = true
+        end
+    end)
+end
+
+UtilitiesTab:CreateToggle({ Name = "🎮 Enable Remote Spy", Default = false, Callback = function(v)
+    spyEnabled = v
+    if v then setupRemoteSpy(); NoirUI:Notify("Remote Spy", "Enabled") else NoirUI:Notify("Remote Spy", "Disabled") end
+end })
+UtilitiesTab:CreateButton({ Name = "🗑️ Clear Logs", Callback = function() remoteLogs = {}; NoirUI:Notify("Cleared", "Logs cleared") end })
+UtilitiesTab:CreateButton({ Name = "📋 Print Logs to Console", Callback = function()
+    if #remoteLogs == 0 then NoirUI:Notify("Logs", "No remotes captured") return end
+    print("\n========== REMOTE SPY LOGS ==========")
+    for i, log in ipairs(remoteLogs) do print(string.format("[%s] %s", log.Time, log.Remote)); print("  Args:", log.Arguments); print("-----------------------------------") end
+    NoirUI:Notify("Printed", "Check console (F9)")
+end })
+UtilitiesTab:CreateButton({ Name = "📋 Copy Last Remote", Callback = function()
+    if #remoteLogs == 0 then NoirUI:Notify("Error", "No remotes captured") return end
+    local last = remoteLogs[1]
+    setclipboard(string.format("Remote: %s\nArgs: %s", last.Remote, tostring(last.Arguments)))
+    NoirUI:Notify("Copied", "Last remote copied")
+end })
+
+-- ========== NOTIFICATION ==========
+task.wait(2)
+NoirUI:Notify("🔥 NOIR HUB", "Da tai thanh cong!")

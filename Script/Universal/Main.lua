@@ -2048,7 +2048,8 @@ RunService.RenderStepped:Connect(function()
     end
 end)
 
--- ======================== UTILITIES TAB ========================
+-- ======================== UTILITIES TAB (FIXED) ========================
+
 UtilitiesTab:CreateSection("Player Info")
 
 local utilSelectedPlayer = nil
@@ -2057,14 +2058,18 @@ local function utilFindPlayer(text)
     if not text or text == "" then return nil end
     text = text:lower()
     for _, plr in pairs(Players:GetPlayers()) do
-        if plr.Name:lower():match(text) or plr.DisplayName:lower():match(text) then return plr end
+        if plr.Name:lower():match(text) or plr.DisplayName:lower():match(text) then 
+            return plr 
+        end
     end
     return nil
 end
 
 local function utilGetPlayerList()
     local list = {}
-    for _, plr in pairs(Players:GetPlayers()) do table.insert(list, plr.DisplayName .. " [@" .. plr.Name .. "]") end
+    for _, plr in pairs(Players:GetPlayers()) do 
+        table.insert(list, plr.DisplayName .. " [@" .. plr.Name .. "]") 
+    end
     return list
 end
 
@@ -2077,33 +2082,46 @@ local function utilCopyName()
     end
 end
 
-local function utilCopyPos()
+local function utilCopyPosition()
     if utilSelectedPlayer and utilSelectedPlayer.Character then
         local hrp = utilSelectedPlayer.Character:FindFirstChild("HumanoidRootPart")
         if hrp then
             local pos = hrp.Position
             setclipboard(string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z))
             NoirUI:Notify("Copied", "Position copied")
+        else
+            NoirUI:Notify("Error", "Cannot get position")
         end
     else
         NoirUI:Notify("Error", "Player not found in game")
     end
 end
 
+local function utilTeleportToCoordinates(x, y, z)
+    local char = LocalPlayer.Character
+    local hrp = char and char:FindFirstChild("HumanoidRootPart")
+    if hrp then
+        hrp.CFrame = CFrame.new(x, y, z)
+        NoirUI:Notify("Teleported", string.format("To: %.1f, %.1f, %.1f", x, y, z))
+    end
+end
+
+-- Input tìm player
 UtilitiesTab:CreateInput({
     Name = "Input Player Name",
-    PlaceholderText = "Type username...",
+    PlaceholderText = "Type username or display name...",
     Callback = function(text)
         local plr = utilFindPlayer(text)
         if plr then
             utilSelectedPlayer = plr
-            NoirUI:Notify("Selected", plr.DisplayName)
+            NoirUI:Notify("Selected", plr.DisplayName .. " [@" .. plr.Name .. "]")
         else
             NoirUI:Notify("Not Found", "Player not found")
         end
     end
 })
 
+-- Dropdown chọn player
 local utilDropdown = UtilitiesTab:CreateDropdown({
     Name = "Select Player",
     Options = utilGetPlayerList(),
@@ -2112,78 +2130,270 @@ local utilDropdown = UtilitiesTab:CreateDropdown({
         if opt and opt ~= "" then
             local name = opt:match("%[@(.-)%]") or opt
             utilSelectedPlayer = Players:FindFirstChild(name)
+            if utilSelectedPlayer then
+                NoirUI:Notify("Selected", utilSelectedPlayer.DisplayName)
+            end
         end
     end
 })
 
+-- Refresh dropdown
 local function refreshUtilDropdown()
     utilDropdown:Refresh(utilGetPlayerList())
 end
-
 Players.PlayerAdded:Connect(refreshUtilDropdown)
 Players.PlayerRemoving:Connect(refreshUtilDropdown)
+refreshUtilDropdown()
 
-UtilitiesTab:CreateButton({ Name = "Copy Selected Player Name", Callback = utilCopyName })
-UtilitiesTab:CreateButton({ Name = "Copy Selected Player Position", Callback = utilCopyPos })
+-- Buttons
+UtilitiesTab:CreateButton({ 
+    Name = "📋 Copy Selected Player Name", 
+    Callback = utilCopyName 
+})
+
+UtilitiesTab:CreateButton({ 
+    Name = "📍 Copy Selected Player Position", 
+    Callback = utilCopyPosition 
+})
 
 UtilitiesTab:CreateSection("Map Teleport")
 
-local tpX, tpY, tpZ = 0, 0, 0
+local coordX, coordY, coordZ = 0, 0, 0
 
 UtilitiesTab:CreateInput({
     Name = "Coordinates (X Y Z)",
-    PlaceholderText = "Example: 0 10 0",
+    PlaceholderText = "Example: 0 10 0 or -39.5 6.2 -84.7",
     Callback = function(text)
         local parts = {}
         for num in string.gmatch(text, "[-]?%d+%.?%d*") do
             table.insert(parts, tonumber(num))
         end
-        tpX = parts[1] or 0
-        tpY = parts[2] or 10
-        tpZ = parts[3] or 0
+        coordX = parts[1] or 0
+        coordY = parts[2] or 10
+        coordZ = parts[3] or 0
     end
 })
 
 UtilitiesTab:CreateButton({
-    Name = "Teleport to Position",
+    Name = "🚀 Teleport to Position",
     Callback = function()
-        local char = LocalPlayer.Character
-        local hrp = char and char:FindFirstChild("HumanoidRootPart")
-        if hrp then
-            hrp.CFrame = CFrame.new(tpX, tpY, tpZ)
-            NoirUI:Notify("Teleported", string.format("To: %.1f, %.1f, %.1f", tpX, tpY, tpZ))
+        utilTeleportToCoordinates(coordX, coordY, coordZ)
+    end
+})
+
+UtilitiesTab:CreateButton({
+    Name = "📷 Copy Camera Position",
+    Callback = function()
+        local pos = Camera.CFrame.Position
+        setclipboard(string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z))
+        NoirUI:Notify("Copied", "Camera position copied to clipboard")
+    end
+})
+
+-- Loop teleport
+local loopTeleportActive = false
+local loopTeleportConnection = nil
+
+UtilitiesTab:CreateToggle({
+    Name = "🔄 Loop Teleport (Every 0.5s)",
+    Default = false,
+    Callback = function(v)
+        loopTeleportActive = v
+        if v then
+            if loopTeleportConnection then loopTeleportConnection:Disconnect() end
+            loopTeleportConnection = RunService.Heartbeat:Connect(function()
+                if loopTeleportActive then
+                    utilTeleportToCoordinates(coordX, coordY, coordZ)
+                end
+            end)
+        else
+            if loopTeleportConnection then
+                loopTeleportConnection:Disconnect()
+                loopTeleportConnection = nil
+            end
+        end
+    end
+})
+
+-- Save positions
+local savedPositions = {}
+local savedDropdown = nil
+
+local function refreshSavedDropdown()
+    if not savedDropdown then return end
+    local options = {}
+    for name in pairs(savedPositions) do
+        table.insert(options, name)
+    end
+    if #options == 0 then
+        table.insert(options, "No saved positions")
+    end
+    savedDropdown:Refresh(options)
+end
+
+UtilitiesTab:CreateInput({
+    Name = "Save Current Position As",
+    PlaceholderText = "Enter name to save...",
+    Callback = function(text)
+        if text and text ~= "" then
+            local char = LocalPlayer.Character
+            local hrp = char and char:FindFirstChild("HumanoidRootPart")
+            if hrp then
+                savedPositions[text] = hrp.Position
+                refreshSavedDropdown()
+                NoirUI:Notify("Saved", "Position saved as: " .. text)
+            else
+                NoirUI:Notify("Error", "Cannot get current position")
+            end
+        end
+    end
+})
+
+savedDropdown = UtilitiesTab:CreateDropdown({
+    Name = "Load Saved Position",
+    Options = {"No saved positions"},
+    Default = "No saved positions",
+    Callback = function(opt)
+        if opt and opt ~= "No saved positions" then
+            local pos = savedPositions[opt]
+            if pos then
+                utilTeleportToCoordinates(pos.X, pos.Y, pos.Z)
+            end
         end
     end
 })
 
 UtilitiesTab:CreateButton({
-    Name = "Copy Camera Position",
+    Name = "🔄 Refresh Saved List",
+    Callback = refreshSavedDropdown
+})
+
+UtilitiesTab:CreateSection("Tools")
+
+UtilitiesTab:CreateButton({
+    Name = "👆 Tap to Teleport (Click on part)",
+    Callback = function() 
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/Funny_FE_Scripts/main/Tap_to_TP"))() 
+    end,
+})
+
+UtilitiesTab:CreateButton({
+    Name = "📦 Inventory Viewer",
+    Callback = function() 
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/Funny_FE_Scripts/main/Inventory_Viewer"))() 
+    end,
+})
+
+UtilitiesTab:CreateButton({
+    Name = "💀 Reset Character",
     Callback = function()
-        local pos = Camera.CFrame.Position
-        setclipboard(string.format("%.1f, %.1f, %.1f", pos.X, pos.Y, pos.Z))
-        NoirUI:Notify("Copied", "Camera position copied")
+        if LocalPlayer.Character then 
+            LocalPlayer.Character:BreakJoints()
+            NoirUI:Notify("Reset", "Character reset")
+        end
     end
 })
 
-UtilitiesTab:CreateSection("Extra Tools")
-
 UtilitiesTab:CreateButton({
-    Name = "Tap to Teleport",
-    Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/Funny_FE_Scripts/main/Tap_to_TP"))() end,
-})
-
-UtilitiesTab:CreateButton({
-    Name = "Inventory Viewer",
-    Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/Funny_FE_Scripts/main/Inventory_Viewer"))() end,
-})
-
-UtilitiesTab:CreateButton({
-    Name = "Reset Character",
+    Name = "🔧 Print Character Info",
     Callback = function()
-        if LocalPlayer.Character then LocalPlayer.Character:BreakJoints() end
+        if LocalPlayer.Character then
+            print("Character:", LocalPlayer.Character)
+            NoirUI:Notify("Info", "Check console (F9)")
+        end
     end
 })
 
--- ========== NOTIFICATION ==========
-task.wait(2)
-NoirUI:Notify("🔥 NOIR HUB", "Da tai thanh cong!")
+UtilitiesTab:CreateSection("Remote Spy")
+
+local spyEnabled = false
+local remoteLogs = {}
+local spyConnected = false
+
+local function addRemoteLog(remote, ...)
+    if not spyEnabled then return end
+    local args = {...}
+    local info = {
+        Time = os.date("%H:%M:%S"),
+        Remote = tostring(remote),
+        Arguments = args
+    }
+    table.insert(remoteLogs, 1, info)
+    while #remoteLogs > 50 do table.remove(remoteLogs) end
+end
+
+local function setupRemoteSpy()
+    if spyConnected then return end
+    local success = pcall(function()
+        local mt = getrawmetatable(game)
+        if mt then
+            setreadonly(mt, false)
+            local oldNamecall = mt.__namecall
+            mt.__namecall = function(self, ...)
+                local method = getnamecallmethod()
+                if (method == "FireServer" or method == "InvokeServer") and spyEnabled then
+                    addRemoteLog(self, ...)
+                end
+                return oldNamecall(self, ...)
+            end
+            setreadonly(mt, true)
+            spyConnected = true
+        end
+    end)
+    if not success then
+        NoirUI:Notify("Warning", "Remote Spy not supported on this executor")
+    end
+end
+
+UtilitiesTab:CreateToggle({
+    Name = "🎮 Enable Remote Spy",
+    Default = false,
+    Callback = function(v)
+        spyEnabled = v
+        if v then
+            setupRemoteSpy()
+            NoirUI:Notify("Remote Spy", "Enabled - Watching remotes")
+        else
+            NoirUI:Notify("Remote Spy", "Disabled")
+        end
+    end
+})
+
+UtilitiesTab:CreateButton({
+    Name = "🗑️ Clear Logs",
+    Callback = function()
+        remoteLogs = {}
+        NoirUI:Notify("Cleared", "Remote logs cleared")
+    end
+})
+
+UtilitiesTab:CreateButton({
+    Name = "📋 Print Logs to Console",
+    Callback = function()
+        if #remoteLogs == 0 then
+            NoirUI:Notify("Logs", "No remotes captured yet")
+            return
+        end
+        print("\n========== REMOTE SPY LOGS ==========")
+        for i, log in ipairs(remoteLogs) do
+            print(string.format("[%s] %s", log.Time, log.Remote))
+            print("  Args:", log.Arguments)
+            print("-----------------------------------")
+        end
+        NoirUI:Notify("Printed", "Check console (F9) for logs")
+    end
+})
+
+UtilitiesTab:CreateButton({
+    Name = "📋 Copy Last Remote",
+    Callback = function()
+        if #remoteLogs == 0 then
+            NoirUI:Notify("Error", "No remotes captured")
+            return
+        end
+        local last = remoteLogs[1]
+        local text = string.format("Remote: %s\nArgs: %s", last.Remote, tostring(last.Arguments))
+        setclipboard(text)
+        NoirUI:Notify("Copied", "Last remote copied to clipboard")
+    end
+})

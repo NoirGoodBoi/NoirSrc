@@ -52,8 +52,8 @@ local speedLoop = nil
 
 PlayerTab:CreateSlider({
     Name = "Speed",
-    range = {1, 1000}
-    increment = 1
+    range = {1, 1000},
+    increment = 1,
     Default = 16,
     Callback = function(v) walkspeed = v end
 })
@@ -98,8 +98,8 @@ end
 
 PlayerTab:CreateSlider({
     Name = "Jump Power",
-    range = {1, 1000}
-    increment = 1
+    range = {1, 1000},
+    increment = 1,
     Default = 50,
     Callback = function(v) jumppower = v; applyJump() end
 })
@@ -272,8 +272,8 @@ PlayerTab:CreateToggle({
 
 PlayerTab:CreateSlider({
     Name = "Dash Length",
-    range = {1, 50}
-    increment = 5
+    range = {1, 50},
+    increment = 5,
     Default = 5,
     Callback = function(v)
         dashLength = v
@@ -643,8 +643,8 @@ PlayerTab:CreateToggle({
 
 PlayerTab:CreateSlider({
     Name = "Field Of View",
-    range = {1, 120}
-    increment = 1
+    range = {1, 120},
+    increment = 1,
     Default = Camera.FieldOfView,
     Callback = function(v) Camera.FieldOfView = v end
 })
@@ -804,8 +804,8 @@ FPSTab:CreateToggle({
 
 FPSTab:CreateSlider({
     Name = "Fullbright Brightness",
-    range = {1, 15}
-    increment = 1
+    range = {1, 15},
+    increment = 1,
     Default = 5,
     Callback = function(v)
         fullbrightValue = v

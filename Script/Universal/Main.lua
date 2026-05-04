@@ -166,10 +166,13 @@ local function startAutoJump()
 end
 
 PlayerTab:CreateDropdown({
-    Name = "Auto Jump Mode",
+    Name = "Auto Jump Mode", 
     Options = {"Normal", "Bhop", "Smart", "Force"},
     Default = "Normal",
-    Callback = function(option) autoJumpMode = option end
+    Callback = function(option) 
+        autoJumpMode = option
+        NoirUI:Notify("Auto Jump", "Đã chọn chế độ: " .. option)
+    end
 })
 
 PlayerTab:CreateToggle({

@@ -1,18 +1,27 @@
--- ========== LOAD NOIRUI ==========
 local NoirUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/UI/refs/heads/main/Main.lua"))()
 
--- ========== TAO CUA SO CHINH ==========
 local Window = NoirUI:CreateWindow({
     Name = "🔥 NOIR HUB 🔥",
     Accent = Color3.fromRGB(255, 50, 100),
-    Icon = "👑",
-    LogoID = nil,
+    Icon = 78611376918762,
+    LogoID = 72822911823680,
     DefaultPosition = UDim2.new(0.5, -210, 0.5, -150),
     FloatDefaultPosition = UDim2.new(0, 15, 0.5, -22),
     KeySystem = false,
+    Background = {          
+        Image = 111365258840806,                             
+        Transparency = 0                             
+    },
+    LoadingBackground = {                               
+        Image = 103662083596889,
+        Transparency = 0
+    },
+    NotificationBackground = {
+        Image = 111964745088904,
+        Transparency = 0
+    },
 })
 
--- ========== SERVICES ==========
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
@@ -26,22 +35,20 @@ local LocalPlayer = Players.LocalPlayer
 local Camera = workspace.CurrentCamera
 local mouse = LocalPlayer:GetMouse()
 
--- ========== NOTIFICATION ==========
 task.wait(1)
 NoirUI:Notify("🔥 NOIR HUB", "Loading successful ! 🤫🧏")
 task.wait(0.5)
 NoirUI:Notify("🔥 NOIR HUB", "Thanks to use Script by Noir & Binbeo 👻🤡")
 
--- ========== TAO TABS ==========
-local PlayerTab = Window:CreateTab("Player", "user")
-local FPSTab = Window:CreateTab("FPS", "gauge")
-local VisualTab = Window:CreateTab("Visual", "eye")
-local AimbotTab = Window:CreateTab("Aimbot", "target")
-local LimbsTab = Window:CreateTab("Limbs", "scale-3d")
-local GamesTab = Window:CreateTab("Games", "gamepad")
-local ScriptsTab = Window:CreateTab("Scripts", "file")
-local PacksTab = Window:CreateTab("Packs", "package")
-local PeopleTab = Window:CreateTab("People", "users")
+local PlayerTab = Window:CreateTab("Player", "aesthetic-1")
+local FPSTab = Window:CreateTab("FPS", "aesthetic-2")
+local VisualTab = Window:CreateTab("Visual", "aesthetic-3")
+local AimbotTab = Window:CreateTab("Aimbot", "aesthetic-4")
+local LimbsTab = Window:CreateTab("Limbs", "aesthetic-5")
+local GamesTab = Window:CreateTab("Games", "chibi-1")
+local ScriptsTab = Window:CreateTab("Scripts", "chibi-2")
+local PacksTab = Window:CreateTab("Packs", "chibi-3")
+local PeopleTab = Window:CreateTab("People", "chibi-4")
 
 -- ======================== PLAYER TAB ========================
 PlayerTab:CreateSection("Movement")
@@ -272,7 +279,7 @@ PlayerTab:CreateToggle({
 
 PlayerTab:CreateSlider({
     Name = "Dash Length",
-    range = {1, 50},
+    range = {5, 50},
     increment = 5,
     Default = 5,
     Callback = function(v)

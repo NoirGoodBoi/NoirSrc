@@ -1,7 +1,7 @@
 local NoirUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/UI/refs/heads/main/Main.lua"))()
 
 local Window = NoirUI:CreateWindow({
-    Name = "🔥 NOIR HUB 🔥",
+    Name = " NOIR HUB ",
     Accent = Color3.fromRGB(255, 50, 100),
     Icon = 78611376918762,
     LogoID = 72822911823680,

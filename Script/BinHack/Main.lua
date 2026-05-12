@@ -7,11 +7,12 @@ local Window = NoirUI:CreateWindow({
     LogoID = 72822911823680,
     KeySystem = true,
     KeySettings = {
-        Key = "EG124"
+        Key = "Bin-Hack",
         SaveKey = true,
         FileName = "BinKey",
         Title = "Welcome to BinHub",
-        Subtitle = "Thank to use"
+        Subtitle = "Thank to use",
+        Note = "Tôi là Bin Chubby 🤪"
     },
     Background = {          
         Image = 111365258840806,                             
@@ -43,7 +44,7 @@ local mouse = LocalPlayer:GetMouse()
 task.wait(1)
 NoirUI:Notify("Bin Chubby", "Loading successful ! 🤫🧏")
 task.wait(0.5)
-NoirUI:Notify("Bin Chubby", "Thanks to use Script by Binbeo 👻🤡")
+NoirUI:Notify("Bin Chubby", "Thanks for use Script by Binbeo 👻🤡")
 
 local PlayerTab = Window:CreateTab("Player", "miku-sulking-1")
 local FPSTab = Window:CreateTab("FPS", "miku-awkward-1")

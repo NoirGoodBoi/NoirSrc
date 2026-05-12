@@ -247,8 +247,8 @@ local function teleportVieButton()
     local centerX = mainFramePos.X + mainFrameSize.X / 2
     local centerY = mainFramePos.Y + mainFrameSize.Y / 2
     
-    -- Bán kính tối đa 200px
-    local maxRadius = 200
+    -- Bán kính tối đa 150px
+    local maxRadius = 150
     
     -- Tạo vị trí ngẫu nhiên trong vòng tròn bán kính 300px
     local angle = math.random() * 2 * math.pi
@@ -309,7 +309,7 @@ vieButton.MouseButton1Click:Connect(function()
         "Bro cố chấp vậy 😤",
         "Chọn bản eng có phải xong rồi không 🙄",
         "Bỏ cuộc đi 🤓",
-        "Bro Stop pls 🤯"
+        "Bro, Stop pls 🤯"
     }
     
     if vieClickCount <= #trollMessages then

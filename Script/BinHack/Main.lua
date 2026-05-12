@@ -5,14 +5,7 @@ local Window = NoirUI:CreateWindow({
     Accent = Color3.fromRGB(255, 50, 100),
     Icon = 78611376918762,
     LogoID = 72822911823680,
-    KeySystem = true,
-    KeySettings = {
-        Key = "Bin-Hack",
-        SaveKey = true,
-        FileName = "BinKey",
-        Title = "Chào mừng đến BinHub",
-        Subtitle = "Cảm ơn bạn đã sử dụng",
-        Note = "Tôi là Bin Chubby 🤪"
+    KeySystem = false,
     },
     Background = {          
         Image = 111365258840806,                             

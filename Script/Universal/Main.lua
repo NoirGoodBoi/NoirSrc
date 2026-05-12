@@ -21,7 +21,7 @@ local VIE_SCRIPT = "https://raw.githubusercontent.com/NoirGoodBoi/NoirSrc/refs/h
 local vieClickCount = 0
 local defaultViePos = nil
 local currentNotify = nil
-local isExecuting = false  -- Chống spam click khi đang xử lý
+local isExecuting = false
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "LanguageSelectorUI"
@@ -237,6 +237,42 @@ local function showNotify(title, message)
     end
 end
 
+-- ==================== HÀM NHẢY LUNG TUNG ====================
+local function teleportVieButton()
+    -- Giới hạn nhảy trong vòng 300px xung quanh main UI
+    local mainFramePos = mainFrame.AbsolutePosition
+    local mainFrameSize = mainFrame.AbsoluteSize
+    
+    -- Tâm của main UI
+    local centerX = mainFramePos.X + mainFrameSize.X / 2
+    local centerY = mainFramePos.Y + mainFrameSize.Y / 2
+    
+    -- Bán kính tối đa 300px
+    local maxRadius = 300
+    
+    -- Tạo vị trí ngẫu nhiên trong vòng tròn bán kính 300px
+    local angle = math.random() * 2 * math.pi
+    local radius = math.random(50, maxRadius)
+    local offsetX = math.cos(angle) * radius
+    local offsetY = math.sin(angle) * radius
+    
+    -- Tính vị trí tuyệt đối mới
+    local newAbsX = centerX + offsetX - (buttonWidth / 2)
+    local newAbsY = centerY + offsetY - (buttonHeight / 2)
+    
+    -- Đảm bảo không ra ngoài màn hình quá xa (thêm padding 50px)
+    local viewportSize = workspace.CurrentCamera.ViewportSize
+    newAbsX = math.clamp(newAbsX, -50, viewportSize.X - buttonWidth + 50)
+    newAbsY = math.clamp(newAbsY, -50, viewportSize.Y - buttonHeight + 50)
+    
+    -- Chuyển về UDim2 dựa trên mainFrame
+    local relativeX = newAbsX - mainFramePos.X
+    local relativeY = newAbsY - mainFramePos.Y
+    
+    vieButton.Position = UDim2.new(0, relativeX, 0, relativeY)
+end
+
+-- ==================== ENG BUTTON ====================
 engButton.MouseButton1Click:Connect(function()
     if isExecuting then return end
     pulseEffect(engButton)
@@ -254,19 +290,17 @@ engButton.MouseButton1Click:Connect(function()
     fadeOutAndDestroy()
 end)
 
+-- ==================== VIE BUTTON (NHẢY LUNG TUNG) ====================
 vieButton.MouseButton1Click:Connect(function()
     if isExecuting then return end
     pulseEffect(vieButton)
     
     vieClickCount = vieClickCount + 1
     
-    local frameSize = mainFrame.AbsoluteSize
-    local btnSize = vieButton.AbsoluteSize
-    local maxX = math.max(10, (frameSize.X or 250) - (btnSize.X or 100) - 15)
-    local maxY = math.max(10, (frameSize.Y or 120) - (btnSize.Y or 40) - 45)
-    local minX = 15
-    local minY = 45
+    -- Nhảy lung tung mỗi lần bấm (kể cả lần cuối trước khi chạy script)
+    teleportVieButton()
     
+    -- Danh sách các câu troll
     local trollMessages = {
         "Bro thật sự chọn tiếng việt à? 🤔",
         "Thật à bro 🧐",
@@ -275,20 +309,19 @@ vieButton.MouseButton1Click:Connect(function()
         "Bro cố chấp vậy 😤",
         "Chọn bản eng có phải xong rồi không 🙄",
         "Bỏ cuộc đi 🤓",
-        "Sao bro ko chọn bản eng 😌",
-        "Bro Stop pls 🤯",
-        "Thôi... 😒"
+        "Bro Stop pls 🤯"
     }
     
     if vieClickCount <= #trollMessages then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
         showNotify("hệ thống", trollMessages[vieClickCount])
-    elseif vieClickCount > 10 then
-        vieButton.Position = defaultViePos
-        showNotify("hệ thống", "Thôi được rồi, không trêu nữa 😑")
+    elseif vieClickCount == 9 then
+        showNotify("hệ thống", "Thôi được rồi, lần cuối nhá 😑")
+    elseif vieClickCount == 10 then
+        showNotify("hệ thống", "Đã bảo không trêu nữa mà... 😮‍💨")
         task.wait(0.5)
+        
+        -- Nhảy về vị trí cũ trước khi chạy script
+        vieButton.Position = defaultViePos
         
         local success, err = pcall(function()
             loadstring(game:HttpGet(VIE_SCRIPT))()

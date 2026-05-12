@@ -21,6 +21,7 @@ local VIE_SCRIPT = "https://raw.githubusercontent.com/NoirGoodBoi/NoirSrc/refs/h
 local vieClickCount = 0
 local defaultViePos = nil
 local currentNotify = nil
+local isExecuting = false  -- Chống spam click khi đang xử lý
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "LanguageSelectorUI"
@@ -34,7 +35,7 @@ mainFrame.Parent = screenGui
 mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 mainFrame.BackgroundTransparency = 0
 mainFrame.Size = UDim2.new(0, 250, 0, 120)
-mainFrame.Position = UDim2.new(0.5, -125, 0.5, -90)
+mainFrame.Position = UDim2.new(0.5, -125, 0.5, -60)
 
 local uiCorner = Instance.new("UICorner")
 uiCorner.Parent = mainFrame
@@ -116,6 +117,7 @@ vieCorner.CornerRadius = UDim.new(0, 10)
 defaultViePos = vieButton.Position
 
 local function pulseEffect(button)
+    if isExecuting then return end
     local originalSize = button.Size
     local grow = tweenService:Create(button, TweenInfo.new(0.08, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {Size = UDim2.new(originalSize.X.Scale, originalSize.X.Offset + 5, originalSize.Y.Scale, originalSize.Y.Offset + 5)})
     local shrink = tweenService:Create(button, TweenInfo.new(0.08), {Size = originalSize})
@@ -124,6 +126,8 @@ local function pulseEffect(button)
 end
 
 local function fadeOutAndDestroy()
+    if isExecuting then return end
+    isExecuting = true
     local fadeOut = tweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {BackgroundTransparency = 1})
     for _, v in pairs(mainFrame:GetDescendants()) do
         if v:IsA("TextLabel") or v:IsA("TextButton") then
@@ -132,11 +136,12 @@ local function fadeOutAndDestroy()
     end
     fadeOut:Play()
     fadeOut.Completed:Connect(function()
-        screenGui:Destroy()
+        if screenGui then screenGui:Destroy() end
         if currentNotify then currentNotify:Destroy() end
     end)
 end
 
+-- Fade In
 mainFrame.BackgroundTransparency = 1
 for _, v in pairs(mainFrame:GetDescendants()) do
     if v:IsA("TextLabel") or v:IsA("TextButton") then
@@ -233,6 +238,7 @@ local function showNotify(title, message)
 end
 
 engButton.MouseButton1Click:Connect(function()
+    if isExecuting then return end
     pulseEffect(engButton)
     task.wait(0.12)
     
@@ -249,67 +255,36 @@ engButton.MouseButton1Click:Connect(function()
 end)
 
 vieButton.MouseButton1Click:Connect(function()
+    if isExecuting then return end
     pulseEffect(vieButton)
     
     vieClickCount = vieClickCount + 1
     
     local frameSize = mainFrame.AbsoluteSize
     local btnSize = vieButton.AbsoluteSize
-    local maxX = frameSize.X - btnSize.X - 15
-    local maxY = frameSize.Y - btnSize.Y - 50
+    local maxX = math.max(10, (frameSize.X or 250) - (btnSize.X or 100) - 15)
+    local maxY = math.max(10, (frameSize.Y or 120) - (btnSize.Y or 40) - 45)
     local minX = 15
-    local minY = 50
+    local minY = 45
     
-    if vieClickCount == 1 then
+    local trollMessages = {
+        "Bro thật sự chọn tiếng việt à? 🤔",
+        "Thật à bro 🧐",
+        "Sao bro không chọn bản eng 😕",
+        "Nghe lời tôi đi 😊",
+        "Bro cố chấp vậy 😤",
+        "Chọn bản eng có phải xong rồi không 🙄",
+        "Bỏ cuộc đi 🤓",
+        "Sao bro ko chọn bản eng 😌",
+        "Bro Stop pls 🤯",
+        "Thôi... 😒"
+    }
+    
+    if vieClickCount <= #trollMessages then
         local newX = math.random(minX, maxX)
         local newY = math.random(minY, maxY)
         vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "Bro thật sự chọn tiếng việt à?🤔")
-    elseif vieClickCount == 2 then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "Thật à bro🤨")
-    elseif vieClickCount == 3 then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "Sao bro không chọn bản eng😕")
-    elseif vieClickCount == 4 then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "Nghe lời tôi đi 😊")
-    elseif vieClickCount == 5 then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "Bro cố chấp vậy 😤")
-    elseif vieClickCount == 6 then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "Chọn bản eng có phải xong rồi không 🙄")
-    elseif vieClickCount == 7 then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "Bỏ cuộc đi 🤓")
-    elseif vieClickCount == 8 then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "sao bro ko chọn bản eng")
-    elseif vieClickCount == 9 then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "Bro Stop pls 🤯")
-    elseif vieClickCount == 10 then
-        local newX = math.random(minX, maxX)
-        local newY = math.random(minY, maxY)
-        vieButton.Position = UDim2.new(0, newX, 0, newY)
-        showNotify("hệ thống", "Thôi...😒")
+        showNotify("hệ thống", trollMessages[vieClickCount])
     elseif vieClickCount > 10 then
         vieButton.Position = defaultViePos
         showNotify("hệ thống", "Thôi được rồi, không trêu nữa 😑")
@@ -329,5 +304,6 @@ vieButton.MouseButton1Click:Connect(function()
 end)
 
 closeButton.MouseButton1Click:Connect(function()
+    if isExecuting then return end
     fadeOutAndDestroy()
 end)

@@ -1,6 +1,8 @@
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local tweenService = game:GetService("TweenService")
+local soundService = game:GetService("SoundService")
+local userInputService = game:GetService("UserInputService")
 
 local function destroyExistingUI()
     local playerGui = player:WaitForChild("PlayerGui")
@@ -18,10 +20,54 @@ local STROKE_COLOR = Color3.fromRGB(128, 0, 255)
 local ENG_SCRIPT = "https://raw.githubusercontent.com/NoirGoodBoi/NoirSrc/refs/heads/main/Script/Universal/Eng.lua"
 local VIE_SCRIPT = "https://raw.githubusercontent.com/NoirGoodBoi/NoirSrc/refs/heads/main/Script/Universal/Vie.lua"
 
+local soundIds = {
+    [1] = "rbxassetid://107720695419642",
+    [2] = "rbxassetid://77173593343278",
+    [3] = "rbxassetid://132094412976967",
+    [4] = "rbxassetid://96249515221890",
+    [5] = "rbxassetid://79681712962630",
+    [6] = "rbxassetid://79062704024401",
+    [7] = "rbxassetid://96632187935759",
+    [8] = "rbxassetid://99272167491420",
+    [9] = "rbxassetid://138882491317521",
+    [10] = "rbxassetid://84840351603473",
+    [11] = "rbxassetid://78816611240993",
+    [12] = "rbxassetid://139771888058836",
+}
+
+local currentSound = nil
+local currentNotify = nil
 local vieClickCount = 0
 local defaultViePos = nil
-local currentNotify = nil
 local isExecuting = false
+local hasExecutedScript = false
+
+local function playSound(soundId)
+    if currentSound and currentSound.Playing then
+        currentSound:Stop()
+        currentSound:Destroy()
+    end
+    
+    if not soundId or soundId == "rbxassetid://YOUR_SOUND_ID_1" and soundId ~= nil then
+        if string.find(soundId, "YOUR_SOUND_ID") then
+            return
+        end
+    end
+    
+    local sound = Instance.new("Sound")
+    sound.SoundId = soundId
+    sound.Volume = 1
+    sound.Parent = soundService
+    sound:Play()
+    currentSound = sound
+    
+    sound.Ended:Connect(function()
+        if currentSound == sound then
+            currentSound = nil
+        end
+        sound:Destroy()
+    end)
+end
 
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "LanguageSelectorUI"
@@ -36,6 +82,8 @@ mainFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
 mainFrame.BackgroundTransparency = 0
 mainFrame.Size = UDim2.new(0, 250, 0, 120)
 mainFrame.Position = UDim2.new(0.5, -125, 0.5, -60)
+mainFrame.Active = true
+mainFrame.Draggable = false
 
 local uiCorner = Instance.new("UICorner")
 uiCorner.Parent = mainFrame
@@ -101,11 +149,10 @@ engCorner.CornerRadius = UDim.new(0, 10)
 
 local vieButton = Instance.new("TextButton")
 vieButton.Name = "VieButton"
-vieButton.Parent = mainFrame
+vieButton.Parent = screenGui
 vieButton.BackgroundColor3 = Color3.fromRGB(60, 60, 70)
 vieButton.BackgroundTransparency = 0.3
 vieButton.Size = UDim2.new(0, buttonWidth, 0, buttonHeight)
-vieButton.Position = UDim2.new(0.5, 10, 0, buttonY)
 vieButton.Text = "Vie"
 vieButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 vieButton.TextSize = 18
@@ -114,6 +161,10 @@ local vieCorner = Instance.new("UICorner")
 vieCorner.Parent = vieButton
 vieCorner.CornerRadius = UDim.new(0, 10)
 
+-- Cập nhật vị trí ban đầu
+task.wait(0.1)
+local mainPos = mainFrame.AbsolutePosition
+vieButton.Position = UDim2.new(0, mainPos.X + 135, 0, mainPos.Y + 50)
 defaultViePos = vieButton.Position
 
 local function pulseEffect(button)
@@ -128,12 +179,20 @@ end
 local function fadeOutAndDestroy()
     if isExecuting then return end
     isExecuting = true
+    
+    if currentSound then
+        currentSound:Stop()
+        currentSound:Destroy()
+        currentSound = nil
+    end
+    
     local fadeOut = tweenService:Create(mainFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad), {BackgroundTransparency = 1})
     for _, v in pairs(mainFrame:GetDescendants()) do
         if v:IsA("TextLabel") or v:IsA("TextButton") then
             tweenService:Create(v, TweenInfo.new(0.25), {TextTransparency = 1, BackgroundTransparency = 1}):Play()
         end
     end
+    tweenService:Create(vieButton, TweenInfo.new(0.25), {BackgroundTransparency = 1, TextTransparency = 1}):Play()
     fadeOut:Play()
     fadeOut.Completed:Connect(function()
         if screenGui then screenGui:Destroy() end
@@ -141,8 +200,9 @@ local function fadeOutAndDestroy()
     end)
 end
 
--- Fade In
 mainFrame.BackgroundTransparency = 1
+vieButton.BackgroundTransparency = 0.5
+vieButton.TextTransparency = 1
 for _, v in pairs(mainFrame:GetDescendants()) do
     if v:IsA("TextLabel") or v:IsA("TextButton") then
         v.TextTransparency = 1
@@ -154,6 +214,7 @@ end
 
 task.wait(0.05)
 tweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {BackgroundTransparency = 0}):Play()
+tweenService:Create(vieButton, TweenInfo.new(0.3), {BackgroundTransparency = 0.3, TextTransparency = 0}):Play()
 for _, v in pairs(mainFrame:GetDescendants()) do
     if v:IsA("TextLabel") or v:IsA("TextButton") then
         tweenService:Create(v, TweenInfo.new(0.3), {TextTransparency = 0}):Play()
@@ -163,9 +224,39 @@ for _, v in pairs(mainFrame:GetDescendants()) do
     end
 end
 
-local function showNotify(title, message)
+local function getRandomPositionNearMainUI()
+    local mainPos = mainFrame.AbsolutePosition
+    local mainSize = mainFrame.AbsoluteSize
+    
+    local centerX = mainPos.X + mainSize.X / 2
+    local centerY = mainPos.Y + mainSize.Y / 2
+    
+    local angle = math.random() * math.pi * 2
+    local radius = math.random(50, 300)
+    local newX = centerX + math.cos(angle) * radius
+    local newY = centerY + math.sin(angle) * radius
+    
+    local viewportSize = workspace.CurrentCamera.ViewportSize
+    newX = math.clamp(newX, 50, viewportSize.X - 100)
+    newY = math.clamp(newY, 50, viewportSize.Y - 100)
+    
+    return UDim2.new(0, newX, 0, newY)
+end
+
+local function showNotify(title, message, soundId, isWarning)
+    if currentSound and currentSound.Playing then
+        currentSound:Stop()
+        currentSound:Destroy()
+        currentSound = nil
+    end
+    
     if currentNotify then
         currentNotify:Destroy()
+    end
+    
+    -- Phát âm thanh (bỏ qua nếu là placeholder)
+    if soundId and not string.find(soundId, "YOUR_SOUND_ID") then
+        playSound(soundId)
     end
     
     local notifyGui = Instance.new("ScreenGui")
@@ -174,7 +265,7 @@ local function showNotify(title, message)
     
     local notifyFrame = Instance.new("Frame")
     notifyFrame.Parent = notifyGui
-    notifyFrame.BackgroundColor3 = Color3.fromRGB(20, 20, 30)
+    notifyFrame.BackgroundColor3 = isWarning and Color3.fromRGB(80, 30, 30) or Color3.fromRGB(20, 20, 30)
     notifyFrame.BackgroundTransparency = 0.1
     notifyFrame.Size = UDim2.new(0, 280, 0, 55)
     notifyFrame.Position = UDim2.new(0.5, -140, 0.2, 0)
@@ -184,7 +275,7 @@ local function showNotify(title, message)
     
     local notifyStroke = Instance.new("UIStroke")
     notifyStroke.Parent = notifyFrame
-    notifyStroke.Color = STROKE_COLOR
+    notifyStroke.Color = isWarning and Color3.fromRGB(255, 100, 100) or STROKE_COLOR
     notifyStroke.Thickness = 1.5
     notifyStroke.Transparency = 0.5
     
@@ -193,7 +284,7 @@ local function showNotify(title, message)
     titleLabelN.Size = UDim2.new(1, 0, 0, 22)
     titleLabelN.Position = UDim2.new(0, 10, 0, 5)
     titleLabelN.Text = title
-    titleLabelN.TextColor3 = Color3.fromRGB(255, 200, 100)
+    titleLabelN.TextColor3 = isWarning and Color3.fromRGB(255, 150, 150) or Color3.fromRGB(255, 200, 100)
     titleLabelN.BackgroundTransparency = 1
     titleLabelN.TextXAlignment = Enum.TextXAlignment.Left
     titleLabelN.TextSize = 13
@@ -237,42 +328,19 @@ local function showNotify(title, message)
     end
 end
 
--- ==================== HÀM NHẢY LUNG TUNG ====================
-local function teleportVieButton()
-    -- Giới hạn nhảy trong vòng 300px xung quanh main UI
-    local mainFramePos = mainFrame.AbsolutePosition
-    local mainFrameSize = mainFrame.AbsoluteSize
-    
-    -- Tâm của main UI
-    local centerX = mainFramePos.X + mainFrameSize.X / 2
-    local centerY = mainFramePos.Y + mainFrameSize.Y / 2
-    
-    -- Bán kính tối đa 150px
-    local maxRadius = 150
-    
-    -- Tạo vị trí ngẫu nhiên trong vòng tròn bán kính 300px
-    local angle = math.random() * 2 * math.pi
-    local radius = math.random(50, maxRadius)
-    local offsetX = math.cos(angle) * radius
-    local offsetY = math.sin(angle) * radius
-    
-    -- Tính vị trí tuyệt đối mới
-    local newAbsX = centerX + offsetX - (buttonWidth / 2)
-    local newAbsY = centerY + offsetY - (buttonHeight / 2)
-    
-    -- Đảm bảo không ra ngoài màn hình quá xa (thêm padding 50px)
-    local viewportSize = workspace.CurrentCamera.ViewportSize
-    newAbsX = math.clamp(newAbsX, -50, viewportSize.X - buttonWidth + 50)
-    newAbsY = math.clamp(newAbsY, -50, viewportSize.Y - buttonHeight + 50)
-    
-    -- Chuyển về UDim2 dựa trên mainFrame
-    local relativeX = newAbsX - mainFramePos.X
-    local relativeY = newAbsY - mainFramePos.Y
-    
-    vieButton.Position = UDim2.new(0, relativeX, 0, relativeY)
-end
+local trollData = {
+    {msg = "Bro thật sự chọn tiếng việt à? 🤔"},
+    {msg = "Thật à bro 🧐"},
+    {msg = "Sao bro không chọn bản eng 😕"},
+    {msg = "Nghe lời tôi đi 😊"},
+    {msg = "Bro cố chấp vậy 😤"},
+    {msg = "Chọn bản eng có phải xong rồi không 🙄"},
+    {msg = "Bỏ cuộc đi 🤓"},
+    {msg = "M có thôi ngay đi không 😒"},
+    {msg = "Dừng lại đi 🤯"},
+    {msg = "Đừng bấm nữa 😒"},
+}
 
--- ==================== ENG BUTTON ====================
 engButton.MouseButton1Click:Connect(function()
     if isExecuting then return end
     pulseEffect(engButton)
@@ -290,38 +358,30 @@ engButton.MouseButton1Click:Connect(function()
     fadeOutAndDestroy()
 end)
 
--- ==================== VIE BUTTON (NHẢY LUNG TUNG) ====================
 vieButton.MouseButton1Click:Connect(function()
     if isExecuting then return end
     pulseEffect(vieButton)
     
     vieClickCount = vieClickCount + 1
     
-    -- Nhảy lung tung mỗi lần bấm (kể cả lần cuối trước khi chạy script)
-    teleportVieButton()
-    
-    -- Danh sách các câu troll
-    local trollMessages = {
-        "Bro thật sự chọn tiếng việt à? 🤔",
-        "Thật à bro 🧐",
-        "Sao bro không chọn bản eng 😕",
-        "Nghe lời tôi đi 😊",
-        "Bro cố chấp vậy 😤",
-        "Chọn bản eng có phải xong rồi không 🙄",
-        "Bỏ cuộc đi 🤓",
-        "Bro, Stop pls 🤯"
-    }
-    
-    if vieClickCount <= #trollMessages then
-        showNotify("hệ thống", trollMessages[vieClickCount])
-    elseif vieClickCount == 9 then
-        showNotify("hệ thống", "Thôi được rồi, lần cuối nhá 😑")
-    elseif vieClickCount == 10 then
-        showNotify("hệ thống", "Đã bảo không trêu nữa mà... 😮‍💨")
-        task.wait(0.5)
+    if vieClickCount <= #trollData then
+        local newPos = getRandomPositionNearMainUI()
+        tweenService:Create(vieButton, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            Position = newPos
+        }):Play()
         
-        -- Nhảy về vị trí cũ trước khi chạy script
-        vieButton.Position = defaultViePos
+        local data = trollData[vieClickCount]
+        showNotify("hệ thống", data.msg, soundIds[vieClickCount])
+    
+    elseif vieClickCount == 11 and not hasExecutedScript then
+        tweenService:Create(vieButton, TweenInfo.new(0.3, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            Position = defaultViePos
+        }):Play()
+        
+        showNotify("hệ thống", "Thôi được rồi, t không trêu m nữa 😑", soundIds[11])
+        task.wait(0.8)
+        
+        hasExecutedScript = true
         
         local success, err = pcall(function()
             loadstring(game:HttpGet(VIE_SCRIPT))()
@@ -331,8 +391,10 @@ vieButton.MouseButton1Click:Connect(function()
             showNotify("Lỗi", "Không thể tải script Vie: " .. tostring(err))
             return
         end
-        
         fadeOutAndDestroy()
+    
+    elseif vieClickCount >= 12 and hasExecutedScript then
+        showNotify("hệ thống", "Đã bảo là ko trêu nữa mà 😤", soundIds[12], true)
     end
 end)
 

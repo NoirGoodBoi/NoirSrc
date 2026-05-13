@@ -3,21 +3,21 @@ local NoirUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGo
 local Window = NoirUI:CreateWindow({
     Name = " NOIR HUB ",
     Accent = Color3.fromRGB(255, 50, 100),
-    Icon = 78611376918762,
-    LogoID = 72822911823680,
+    Icon = 81186534787994,
+    LogoID = 71268018774331,
     DefaultPosition = UDim2.new(0.5, -210, 0.5, -150),
     FloatDefaultPosition = UDim2.new(0, 15, 0.5, -22),
     KeySystem = false,
     Background = {          
-        Image = 111365258840806,                             
+        Image = 102960214006636,                             
         Transparency = 0                             
     },
     LoadingBackground = {                               
-        Image = 103662083596889,
+        Image = 137498433529235,
         Transparency = 0
     },
     NotificationBackground = {
-        Image = 111964745088904,
+        Image = 79509989876814,
         Transparency = 0
     },
 })
@@ -40,15 +40,15 @@ NoirUI:Notify("🔥 NOIR HUB", "Tải thành công! 🤫🧏")
 task.wait(0.5)
 NoirUI:Notify("🔥 NOIR HUB", "Cảm ơn bạn đã sử dụng Script bởi Noir & Binbeo 👻🤡")
 
-local PlayerTab = Window:CreateTab("Người chơi", "miku-sulking-1")
-local FPSTab = Window:CreateTab("FPS", "miku-awkward-1")
-local VisualTab = Window:CreateTab("Hiển thị", "miku-happy")
-local AimbotTab = Window:CreateTab("Aimbot", "miku-smile-3")
-local LimbsTab = Window:CreateTab("Tay chân", "miku-chill")
-local GamesTab = Window:CreateTab("Trò chơi", "Miku-relax")
-local ScriptsTab = Window:CreateTab("Script", "miku-sullen")
-local PacksTab = Window:CreateTab("Gói", "miku-sulking-5")
-local PeopleTab = Window:CreateTab("Người chơi", "miku-angry")
+local PlayerTab = Window:CreateTab("Người chơi", 107678094816768)
+local FPSTab = Window:CreateTab("FPS", 84855926406781)
+local VisualTab = Window:CreateTab("Hiển thị", 85812166807743)
+local AimbotTab = Window:CreateTab("Aimbot", 86858138911504)
+local LimbsTab = Window:CreateTab("Tay chân", 81812599932814)
+local GamesTab = Window:CreateTab("Trò chơi", 89814701438181)
+local ScriptsTab = Window:CreateTab("Script", 80776363482735)
+local PacksTab = Window:CreateTab("Gói", 110602770492151)
+local PeopleTab = Window:CreateTab("Người chơi", 113749219341567)
 
 -- ======================== PLAYER TAB ========================
 PlayerTab:CreateSection("Di chuyển")

@@ -23,7 +23,7 @@ local Window = NoirUI:CreateWindow({
     BackgroundMusic = {
         Enabled = true,
         AutoPlay = true,
-        Volume = 0.5,
+        Volume = 0.3,
         Playlist = {1846088038, 142376088, 110788401793874, 115189039255362, 988337901681441, 1848354536, 76463442516219, 136208016606825, 121559463895939, 105059799927487, 89640968491575, 1841443579, 72678301552319, 108531350726198, 71225819538909, 134739022022373, 123252719028796},
         LoopMode = "playlist",
     }
@@ -54,13 +54,6 @@ NoirUI:SetCustomSound("Close", "rbxassetid://139793983767220")
 NoirUI:SetCustomSound("Notification", "rbxassetid://131935970184832")
 NoirUI:SetCustomSound("Success", "rbxassetid://131446974807146")
 NoirUI:SetCustomSound("Error", "rbxassetid://140650754692075")
-NoirUI:EnableBackgroundMusic({
-    Enabled = true,
-    AutoPlay = true,
-    Volume = 0.5,
-    Playlist = {1846088038, 142376088, 110788401793874, 115189039255362, 988337901681441, 1848354536, 76463442516219, 136208016606825, 121559463895939, 105059799927487, 89640968491575, 1841443579, 72678301552319, 108531350726198, 71225819538909, 134739022022373, 123252719028796},
-    LoopMode = "playlist",
-})
 
 local PlayerTab = Window:CreateTab("Player", "miku-sulking-1")
 local FPSTab = Window:CreateTab("FPS", "miku-awkward-1")

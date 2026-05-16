@@ -20,6 +20,13 @@ local Window = NoirUI:CreateWindow({
         Image = 7143074615,
         Transparency = 0
     },
+    BackgroundMusic = {
+        Enabled = true,
+        AutoPlay = true,
+        Volume = 0.5,
+        Playlist = {110919391228823, 99152674992699, 103038059531764, 137611006274341, 97492620376465, 121242950842428, 93181471624438, 99555946575863, 107416390117542},
+        LoopMode = "playlist",
+    }
 })
 
 local Players = game:GetService("Players")
@@ -39,12 +46,27 @@ task.wait(1)
 NoirUI:Notify("🔥 NOIR HUB", "Tải thành công! 🤫🧏")
 task.wait(0.5)
 NoirUI:Notify("🔥 NOIR HUB", "Cảm ơn bạn đã sử dụng Script bởi Noir & Binbeo 👻🤡")
+NoirUI:SetCustomSound("Click", "rbxassetid://138567614125924")
+NoirUI:SetCustomSound("Tab", "rbxassetid://129584950954499")
+NoirUI:SetCustomSound("Element", "rbxassetid://129394652896912")
+NoirUI:SetCustomSound("Open", "rbxassetid://140719978464658")
+NoirUI:SetCustomSound("Close", "rbxassetid://139793983767220")
+NoirUI:SetCustomSound("Notification", "rbxassetid://131935970184832")
+NoirUI:SetCustomSound("Success", "rbxassetid://131446974807146")
+NoirUI:SetCustomSound("Error", "rbxassetid://140650754692075")
+NoirUI:EnableBackgroundMusic({
+    Enabled = true,
+    AutoPlay = true,
+    Volume = 0.5,
+    Playlist = {110919391228823, 99152674992699, 103038059531764, 137611006274341, 97492620376465, 121242950842428, 93181471624438, 99555946575863, 107416390117542},
+    LoopMode = "playlist",
+})
 
 local PlayerTab = Window:CreateTab("Người chơi", 7676297216)
 local FPSTab = Window:CreateTab("FPS", 12880615396)
 local VisualTab = Window:CreateTab("Hiển thị", 18540139340)
 local AimbotTab = Window:CreateTab("Aimbot", 14026042777)
-local LimbsTab = Window:CreateTab("Tay chân", 18540145844)
+local LimbsTab = Window:CreateTab("Hitbox", 18540145844)
 local GamesTab = Window:CreateTab("Trò chơi", 132191100068921)
 local ScriptsTab = Window:CreateTab("Script", 15326710099)
 local PacksTab = Window:CreateTab("Gói", 18540150664)

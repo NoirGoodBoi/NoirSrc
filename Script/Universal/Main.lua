@@ -21,17 +21,17 @@ local ENG_SCRIPT = "https://raw.githubusercontent.com/NoirGoodBoi/NoirSrc/refs/h
 local VIE_SCRIPT = "https://raw.githubusercontent.com/NoirGoodBoi/NoirSrc/refs/heads/main/Script/Universal/Vie.lua"
 
 local soundIds = {
-    [1] = "rbxassetid://107720695419642",
-    [2] = "rbxassetid://77173593343278",
-    [3] = "rbxassetid://132094412976967",
-    [4] = "rbxassetid://96249515221890",
-    [5] = "rbxassetid://79681712962630",
-    [6] = "rbxassetid://79062704024401",
-    [7] = "rbxassetid://96632187935759",
-    [8] = "rbxassetid://99272167491420",
-    [9] = "rbxassetid://138882491317521",
-    [10] = "rbxassetid://84840351603473",
-    [11] = "rbxassetid://78816611240993",
+    [1] = "rbxassetid://140728625116908",
+    [2] = "rbxassetid://140728625116908",
+    [3] = "rbxassetid://140728625116908",
+    [4] = "rbxassetid://140728625116908",
+    [5] = "rbxassetid://140728625116908",
+    [6] = "rbxassetid://140728625116908",
+    [7] = "rbxassetid://140728625116908",
+    [8] = "rbxassetid://140728625116908",
+    [9] = "rbxassetid://140728625116908",
+    [10] = "rbxassetid://140728625116908",
+    [11] = "rbxassetid://140728625116908",
     [12] = "rbxassetid://139771888058836",
 }
 

@@ -23,7 +23,7 @@ local Window = NoirUI:CreateWindow({
     BackgroundMusic = {
         Enabled = true,
         AutoPlay = true,
-        Volume = 0.3,
+        Volume = 0.5,
         Playlist = {1846088038, 142376088, 110788401793874, 115189039255362, 988337901681441, 1848354536, 76463442516219, 136208016606825, 121559463895939, 105059799927487, 89640968491575, 1841443579, 72678301552319, 108531350726198, 71225819538909, 134739022022373, 123252719028796},
         LoopMode = "playlist",
     }
@@ -1975,7 +1975,6 @@ PeopleTab:CreateSection("Player List")
 local selectedTarget = nil
 local loopTP = false
 
--- Dropdown động theo đúng docs
 PeopleTab:CreateDropdown({
     Name = "Select Player",
     GetOptions = function()
@@ -1998,7 +1997,7 @@ PeopleTab:CreateDropdown({
     end
 })
 
-PeopleTab:CreateButton({ Name = "📡 TP to Selected", Align = false, Callback = function()
+PeopleTab:CreateButton({ Name = " TP to Selected", Align = false, Callback = function()
     local target = selectedTarget and Players:FindFirstChild(selectedTarget)
     if target then
         tpToPlayer(target)
@@ -2008,7 +2007,7 @@ PeopleTab:CreateButton({ Name = "📡 TP to Selected", Align = false, Callback =
     end
 end })
 
-PeopleTab:CreateToggle({ Name = "🔄 Loop Teleport", Default = false, Callback = function(v) loopTP = v end })
+PeopleTab:CreateToggle({ Name = " Loop Teleport", Default = false, Callback = function(v) loopTP = v end })
 
 PeopleTab:CreateSection("Follow & Orbit")
 
@@ -2104,16 +2103,25 @@ RunService.Heartbeat:Connect(function(dt)
     local target = selectedTarget and Players:FindFirstChild(selectedTarget)
     local myHRP = getTargetHRP(LocalPlayer)
     local targetHRP = target and getTargetHRP(target)
-    if loopTP and target then tpToPlayer(target) end
+    
+    if loopTP and target then 
+        tpToPlayer(target) 
+    end
+    
     if isFollowing and myHRP and targetHRP then
         local pos = targetHRP.Position + Vector3.new(0,0,3)
         myHRP.CFrame = myHRP.CFrame:Lerp(CFrame.new(pos), dt * (followSpd/10))
     end
+    
     if isOrbiting and myHRP and targetHRP then
-        local angSpd = orbitSpd / math.max(orbitR, 0.1)
+        local angSpd = math.rad(orbitSpd) -- orbitSpd l� /gi�y t slider
         orbitAng = orbitAng + angSpd * dt
-        local offset = Vector3.new(math.cos(orbitAng) * orbitR, orbitY, math.sin(orbitAng) * orbitR)
-        myHRP.CFrame = CFrame.new(targetHRP.Position + offset, targetHRP.Position)
+        
+        local localOffset = Vector3.new(math.cos(orbitAng) * orbitR, orbitY, math.sin(orbitAng) * orbitR)
+        
+        local worldOffset = targetHRP.CFrame:VectorToWorldSpace(localOffset)
+        
+        myHRP.CFrame = CFrame.new(targetHRP.Position + worldOffset, targetHRP.Position)
     end
 end)
 

@@ -23,7 +23,7 @@ local Window = NoirUI:CreateWindow({
     BackgroundMusic = {
         Enabled = true,
         AutoPlay = true,
-        Volume = 0.3,
+        Volume = 0.5,
         Playlist = {110919391228823, 99152674992699, 103038059531764, 137611006274341, 97492620376465, 121242950842428, 93181471624438, 99555946575863, 107416390117542},
         LoopMode = "playlist",
     }
@@ -2412,16 +2412,25 @@ RunService.Heartbeat:Connect(function(dt)
     local target = selectedTarget and Players:FindFirstChild(selectedTarget)
     local myHRP = getTargetHRP(LocalPlayer)
     local targetHRP = target and getTargetHRP(target)
-    if loopTP and target then tpToPlayer(target) end
+    
+    if loopTP and target then 
+        tpToPlayer(target) 
+    end
+    
     if isFollowing and myHRP and targetHRP then
         local pos = targetHRP.Position + Vector3.new(0,0,3)
         myHRP.CFrame = myHRP.CFrame:Lerp(CFrame.new(pos), dt * (followSpd/10))
     end
+    
     if isOrbiting and myHRP and targetHRP then
-        local angSpd = orbitSpd / math.max(orbitR, 0.1)
+        local angSpd = math.rad(orbitSpd) -- orbitSpd l� /gi�y t slider
         orbitAng = orbitAng + angSpd * dt
-        local offset = Vector3.new(math.cos(orbitAng) * orbitR, orbitY, math.sin(orbitAng) * orbitR)
-        myHRP.CFrame = CFrame.new(targetHRP.Position + offset, targetHRP.Position)
+        
+        local localOffset = Vector3.new(math.cos(orbitAng) * orbitR, orbitY, math.sin(orbitAng) * orbitR)
+        
+        local worldOffset = targetHRP.CFrame:VectorToWorldSpace(localOffset)
+        
+        myHRP.CFrame = CFrame.new(targetHRP.Position + worldOffset, targetHRP.Position)
     end
 end)
 
@@ -2443,9 +2452,9 @@ RunService.RenderStepped:Connect(function()
             local dist = myHRP and math.floor((myHRP.Position - hrp.Position).Magnitude) or 0
             local vel = hrp.Velocity
             local spd = math.floor(Vector3.new(vel.X,0,vel.Z).Magnitude)
-            local state = hum:GetState() == Enum.HumanoidStateType.Jumping and "Đang nhảy" or "Mặt đất"
+            local state = hum:GetState() == Enum.HumanoidStateType.Jumping and "Jumping" or "Ground"
             specAvatar.Image = "https://www.roblox.com/headshot-thumbnail/image?userId="..target.UserId.."&width=150&height=150&format=png"
-            specInfo.Text = target.DisplayName.." [@"..target.Name.."]\nKhoảng cách: "..dist.."m\nTốc độ: "..spd.."\nTrạng thái: "..state
+            specInfo.Text = target.DisplayName.." [@"..target.Name.."]\nDist: "..dist.."m\nSpeed: "..spd.."\nState: "..state
         end
     elseif specGui.Enabled then
         specInfo.Text = ""

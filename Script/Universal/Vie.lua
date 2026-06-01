@@ -2059,6 +2059,7 @@ GamesTab:CreateSection("May mắn/RNG")
 GamesTab:CreateButton({ Name = "Blox Fruit", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/bloxfruit/refs/heads/main/main.lua"))() end })
 GamesTab:CreateButton({ Name = "Sailor Piece", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/SailorPiece/refs/heads/main/heh.lua"))() end })
 GamesTab:CreateButton({ Name = "AK Gaming Ez Hub", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/hehej97/AkGamingEzv2.1/refs/heads/main/AKGaming.lua"))() end })
+GamesTab:CreateButton({ Name = "Cursed Blade", Callback = function() loadstring(game:HttpGet("https://api.glua.xyz/loader"))() end })
 
 GamesTab:CreateSection("Brainrot")
 GamesTab:CreateButton({ Name = "Steal A Brainrot", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/stealabrainrot/refs/heads/main/shiba.lua"))() end })
@@ -2307,7 +2308,7 @@ PeopleTab:CreateToggle({
 PeopleTab:CreateSlider({ 
     Name = "Bán kính quay", 
     Subtitle = "Khoảng cách đến tâm khi quay",
-    range = {1, 1000}, increment = 1, Default = 10, 
+    range = {0, 1000}, increment = 1, Default = 10, 
     Callback = function(v) orbitR = v end 
 })
 PeopleTab:CreateSlider({ 
@@ -2423,7 +2424,7 @@ RunService.Heartbeat:Connect(function(dt)
     end
     
     if isOrbiting and myHRP and targetHRP then
-        local angSpd = math.rad(orbitSpd) -- orbitSpd l� /gi�y t slider
+        local angSpd = math.rad(orbitSpd)
         orbitAng = orbitAng + angSpd * dt
         
         local localOffset = Vector3.new(math.cos(orbitAng) * orbitR, orbitY, math.sin(orbitAng) * orbitR)

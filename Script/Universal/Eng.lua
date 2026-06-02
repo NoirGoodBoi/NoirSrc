@@ -1819,7 +1819,7 @@ GamesTab:CreateSection("RNG")
 GamesTab:CreateButton({ Name = "Blox Fruit", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/bloxfruit/refs/heads/main/main.lua"))() end })
 GamesTab:CreateButton({ Name = "Sailor Piece", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/SailorPiece/refs/heads/main/heh.lua"))() end })
 GamesTab:CreateButton({ Name = "AK Gaming Ez Hub", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/hehej97/AkGamingEzv2.1/refs/heads/main/AKGaming.lua"))() end })
-GamesTab:CreateButton({ Name = "Cursed Blade", Callback = function() loadstring(game:HttpGet("https://api.glua.xyz/loader"))() end }
+GamesTab:CreateButton({ Name = "Cursed Blade", Callback = function() loadstring(game:HttpGet("https://api.glua.xyz/loader"))() end })
 
 GamesTab:CreateSection("Brainrot")
 GamesTab:CreateButton({ Name = "Steal A Brainrot", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/scriptjame/stealabrainrot/refs/heads/main/shiba.lua"))() end })
@@ -1904,6 +1904,14 @@ ScriptsTab:CreateButton({ Name = "Server Menu Script", Callback = function() loa
 PacksTab:CreateSection("Outfit")
 PacksTab:CreateButton({ Name = "Korblox", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/NoirPacks/main/Korblox.lua"))() end })
 PacksTab:CreateButton({ Name = "Headless", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/NoirGoodBoi/NoirPacks/main/Headless.lua"))() end })
+
+PacksTab:CreateSection("Piano")
+PacksTab:CreateButton({ Name = "Piano Vietnam", Callback = function() loadstring(game:HttpGet("https://gist.githubusercontent.com/vukhanhtoan2907-lab/705658996e60d919a22cdc5dc0ce90d9/raw/gistfile1.txt"))() end })
+PacksTab:CreateButton({ Name = "Piano Foreign (key: 471494)", Callback = function() loadstring(game:HttpGet("https://hellohellohell0.com/talentless-raw/TALENTLESS.lua", true))() end })
+PacksTab:CreateButton({ Name = "Piano VITL Hub", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/RandomGuy-VN/VITL_HUB_PIANO/refs/heads/main/main.lua"))() end })
+PacksTab:CreateButton({ Name = "Piano HoangPhi 1", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/phiphaisieudeptrainhatthegioi-hub/Ai-h-i1/refs/heads/main/obfuscated_script-1776337063875.lua%20(1).txt"))() end })
+PacksTab:CreateButton({ Name = "Piano HoangPhi 2", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/phiphaisieudeptrainhatthegioi-hub/Pianolehoangphi2k13/refs/heads/main/obfuscated_script-1775368534366.lua.txt"))() end })
+PacksTab:CreateButton({ Name = "Piano Claude", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/unrealchanhehe-max/piano-vn-he/refs/heads/main/piano%20vn%201.7.0"))() end })
 
 PacksTab:CreateSection("Emote & Animation")
 PacksTab:CreateButton({ Name = "Animation Pack", Callback = function() loadstring(game:HttpGet("https://raw.githubusercontent.com/gwnrdt/gwnrdt/refs/heads/main/Animation.lua"))() end })
